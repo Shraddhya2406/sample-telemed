@@ -1,6 +1,10 @@
 {
+  "_index-B9ygI19o.js": {
+    "file": "assets/index-B9ygI19o.js",
+    "name": "index"
+  },
   "resources/css/app.css": {
-    "file": "assets/app-Fd1AHUA2.css",
+    "file": "assets/app-lZa4SZ2_.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -9,9 +13,21 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CAiCLEjY.js",
+    "file": "assets/app-BsJAy7GL.js",
     "name": "app",
     "src": "resources/js/app.js",
-    "isEntry": true
+    "isEntry": true,
+    "imports": [
+      "_index-B9ygI19o.js"
+    ]
+  },
+  "resources/js/quiz-ajax.js": {
+    "file": "assets/quiz-ajax-B2ZckMdP.js",
+    "name": "quiz-ajax",
+    "src": "resources/js/quiz-ajax.js",
+    "isEntry": true,
+    "imports": [
+      "_index-B9ygI19o.js"
+    ]
   }
 }

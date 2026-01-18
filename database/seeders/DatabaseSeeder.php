@@ -8,6 +8,9 @@ use Illuminate\Database\Seeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UserSeeder;
 use Database\Seeders\AppointmentSeeder;
+use Database\Seeders\HealthQuestionSeeder;
+use Database\Seeders\HealthOptionSeeder;
+use Database\Seeders\MedicineRecommendationSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,6 +25,9 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             AppointmentSeeder::class,
+            HealthQuestionSeeder::class,
+            HealthOptionSeeder::class,
+            MedicineRecommendationSeeder::class,
         ]);
     }
 }

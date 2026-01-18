@@ -27,16 +27,28 @@ class RegisterController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
+            'role_id' => 'nullable|exists:roles,id',
         ]);
 
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'role_id' => $data['role_id'] ?? null,
         ]);
 
         Auth::login($user);
 
-        return redirect()->intended('dashboard');
+        // Refresh user to load role relationship
+        $user->refresh();
+        $roleName = $user->role?->name;
+
+        // Redirect based on user role (default to patient dashboard if no role)
+        return match($roleName) {
+            'admin' => redirect()->intended(route('dashboard.admin')),
+            'doctor' => redirect()->intended(route('dashboard.doctor')),
+            'patient' => redirect()->intended(route('dashboard.patient')),
+            default => redirect()->intended(route('dashboard.patient')), // Default to patient
+        };
     }
 }

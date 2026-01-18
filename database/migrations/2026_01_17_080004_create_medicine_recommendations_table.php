@@ -1,0 +1,31 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('medicine_recommendations', function (Blueprint $table) {
+            $table->id();
+            $table->integer('min_score');
+            $table->integer('max_score');
+            $table->string('disease_name');
+            $table->string('medicine_name');
+            $table->text('advice');
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('medicine_recommendations');
+    }
+};
