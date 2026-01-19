@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -27,14 +28,15 @@ class RegisterController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role_id' => 'nullable|exists:roles,id',
+            'role_id' => 'required|exists:roles,id',
         ]);
+        $role_id = Role::where('name', $data['role_id'])->value('id');
 
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role_id' => $data['role_id'] ?? null,
+            'role_id' => $data['role_id'],
         ]);
 
         Auth::login($user);

@@ -8,10 +8,10 @@
     </div>
 
     <div class="bg-blue-50 p-6 rounded mb-6">
-        <div class="mb-6">
+        {{-- <div class="mb-6">
             <p class="text-gray-600 text-sm mb-2">Your Score</p>
             <p class="text-4xl font-bold text-blue-600" id="result-score">0</p>
-        </div>
+        </div> --}}
 
         <hr class="my-4">
 
