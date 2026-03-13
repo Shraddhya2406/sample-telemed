@@ -9,7 +9,7 @@
                 @if($medicine->image)
                     <img src="{{ asset($medicine->image) }}" alt="{{ $medicine->name }}" class="w-full h-56 object-cover">
                 @else
-                    <div class="w-full h-56 bg-gray-100 flex items-center justify-center">No image</div>
+                    <img src="{{ asset('images/medicine-default.svg') }}" alt="{{ $medicine->name }}" class="w-full h-56 object-cover">
                 @endif
             </div>
             <div class="flex-1">

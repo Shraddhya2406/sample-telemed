@@ -11,7 +11,7 @@
                 <?php if($medicine->image): ?>
                     <img src="<?php echo e(asset($medicine->image)); ?>" alt="<?php echo e($medicine->name); ?>" class="h-32 w-full object-cover mb-2">
                 <?php else: ?>
-                    <div class="h-32 w-full bg-gray-100 flex items-center justify-center mb-2">No image</div>
+                    <img src="<?php echo e(asset('images/medicine-default.svg')); ?>" alt="<?php echo e($medicine->name); ?>" class="h-32 w-full object-cover mb-2">
                 <?php endif; ?>
 
                 <h2 class="font-medium"><?php echo e($medicine->name); ?></h2>
