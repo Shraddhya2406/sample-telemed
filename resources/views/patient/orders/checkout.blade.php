@@ -5,7 +5,7 @@
     <h1 class="text-2xl font-semibold mb-4">Checkout</h1>
 
     @if(! $cart || $cart->items->isEmpty())
-        <div class="bg-white p-6 rounded shadow-sm">Your cart is empty. <a href="{{ url('/patient/medicines') }}" class="text-blue-600">Browse medicines</a></div>
+        <div class="bg-white p-6 rounded shadow-sm">Your cart is empty. <a href="{{ route('patient.medicines.index') }}" class="text-blue-600">Browse medicines</a></div>
     @else
         <div class="bg-white p-4 rounded shadow-sm">
             <table class="w-full table-auto">
@@ -37,7 +37,7 @@
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Payment Method (optional)</label>
+                        <label class="block text-sm font-medium text-gray-700">Payment Method</label>
                         <select name="payment_method" class="mt-1 block w-full rounded border-gray-300">
                             <!--
                             <option value="">Select (pay later)</option>

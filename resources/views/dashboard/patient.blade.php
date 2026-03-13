@@ -22,7 +22,7 @@
         <div class="bg-indigo-50 p-6 rounded shadow border-l-4 border-indigo-600">
             <h3 class="text-xl font-bold mb-2">Medicine Store</h3>
             <p class="text-gray-600 mb-4">Browse and purchase medicines online from our integrated pharmacy.</p>
-            <a href="{{ url('/patient/medicines') }}" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+            <a href="{{ route('patient.medicines.index') }}" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
                 Visit Store
             </a>
         </div>

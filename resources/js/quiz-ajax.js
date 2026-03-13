@@ -32,6 +32,8 @@ const QuizManager = {
         const container = document.getElementById('quiz-container');
         if (container) {
             this.apiBase = container.dataset.apiBase || '';
+            // optional store URL so JS can link to the pharmacy without Blade
+            this.storeUrl = container.dataset.storeUrl || '';
         }
         
         // Attach event listeners
@@ -228,6 +230,8 @@ const QuizManager = {
     renderResult(data) {
         const resultContainer = document.getElementById('quiz-result');
         const dashboardUrl = document.getElementById('quiz-container')?.dataset.dashboardUrl || '/dashboard/patient';
+        // resolve store URL from data attribute or build it from apiBase
+        const storeUrl = document.getElementById('quiz-container')?.dataset.storeUrl || this.buildUrl('/patient/medicines');
         
         const resultHTML = `
             <div class="text-center">
@@ -273,7 +277,7 @@ const QuizManager = {
                     <button onclick="location.reload()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                         Retake Diagnosis
                     </button>
-                    <a href="{{ route('patient.medicines.index') }}" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+                    <a href="${storeUrl}" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
                         Visit Store
                     </a>
                 </div>
@@ -307,7 +311,7 @@ const QuizManager = {
                 const loadingText = loadingEl.querySelector('p');
                 if (loadingText) {
                     if (this.currentQuestionOrder === 0) {
-                        loadingText.textContent = 'Starting quiz...';
+                        loadingText.textContent = 'Starting diagnosis...';
                     } else {
                         loadingText.textContent = 'Loading question...';
                     }

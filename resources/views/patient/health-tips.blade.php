@@ -35,7 +35,7 @@
 
         <div class="mt-6 flex justify-between items-center">
             <a href="{{ route('dashboard.patient') }}" class="text-sm text-blue-600">&larr; Back to dashboard</a>
-            <a href="{{ url('/patient/medicines') }}" class="bg-indigo-600 text-white px-3 py-2 rounded">Browse Medicines</a>
+            <a href="{{ route('patient.medicines.index') }}" class="bg-indigo-600 text-white px-3 py-2 rounded">Browse Medicines</a>
         </div>
     </div>
 </div>
