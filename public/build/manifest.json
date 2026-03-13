@@ -4,7 +4,7 @@
     "name": "index"
   },
   "resources/css/app.css": {
-    "file": "assets/app-lZa4SZ2_.css",
+    "file": "assets/app-BrvvtwIS.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -13,7 +13,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-BsJAy7GL.js",
+    "file": "assets/app-MvR-rW0w.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -22,7 +22,7 @@
     ]
   },
   "resources/js/quiz-ajax.js": {
-    "file": "assets/quiz-ajax-B2ZckMdP.js",
+    "file": "assets/quiz-ajax-Bsx5K05s.js",
     "name": "quiz-ajax",
     "src": "resources/js/quiz-ajax.js",
     "isEntry": true,

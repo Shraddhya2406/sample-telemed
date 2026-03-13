@@ -3,7 +3,7 @@
 @section('content')
 <div class="max-w-2xl mx-auto">
     <!-- Quiz Container -->
-    <div id="quiz-container" class="bg-white p-8 rounded shadow" data-dashboard-url="{{ route('dashboard.patient') }}">
+    <div id="quiz-container" class="bg-white p-8 rounded shadow" data-dashboard-url="{{ route('dashboard.patient') }}" data-api-base="{{ url('') }}">
         <!-- Initial Loading State -->
         <div id="quiz-loading" class="text-center">
             <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>

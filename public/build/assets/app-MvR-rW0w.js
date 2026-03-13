@@ -1,0 +1,1 @@
+import{a as e}from"./index-B9ygI19o.js";window.axios=e;window.axios.defaults.headers.common["X-Requested-With"]="XMLHttpRequest";typeof window<"u"&&window.APP_API_BASE&&(window.axios.defaults.baseURL=window.APP_API_BASE.replace(/\/$/,""));

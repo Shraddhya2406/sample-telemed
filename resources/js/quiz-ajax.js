@@ -13,12 +13,25 @@ const QuizManager = {
     currentQuestionOrder: 0,
     totalQuestions: 10,
     answers: {}, // Store answers: { questionId: optionId }
+    apiBase: '',
+    buildUrl(path) {
+        // Ensure apiBase is set and join safely to avoid double slashes
+        const base = this.apiBase || '';
+        if (!base) return path;
+        return base.replace(/\/$/, '') + '/' + path.replace(/^\//, '');
+    },
     
     init() {
         // Set up Axios CSRF token
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         if (token) {
             window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+        }
+        
+        // Read API base URL from blade data attribute (handles subdirectory/public)
+        const container = document.getElementById('quiz-container');
+        if (container) {
+            this.apiBase = container.dataset.apiBase || '';
         }
         
         // Attach event listeners
@@ -43,7 +56,7 @@ const QuizManager = {
     },
 
     createQuizAttempt() {
-        axios.post('/patient/health-quiz/start')
+        axios.post(this.buildUrl('/patient/health-quiz/start'))
             .then(response => {
                 this.quizAttemptId = response.data.quiz_attempt_id;
                 const attemptIdInput = document.getElementById('quiz-attempt-id');
@@ -62,7 +75,7 @@ const QuizManager = {
         this.showLoading(true);
         this.showContent(false);
         
-        axios.get(`/patient/health-quiz/question/${order}`)
+        axios.get(this.buildUrl(`/patient/health-quiz/question/${order}`))
             .then(response => {
                 const data = response.data;
                 this.currentQuestionOrder = order;
@@ -159,7 +172,7 @@ const QuizManager = {
         this.showLoading(true);
 
         // Submit answer to backend
-        axios.post('/patient/health-quiz/answer', {
+        axios.post(this.buildUrl('/patient/health-quiz/answer'), {
             quiz_attempt_id: this.quizAttemptId,
             health_question_id: questionId,
             health_option_id: optionId
@@ -198,7 +211,7 @@ const QuizManager = {
         this.showLoading(true);
         this.showContent(false);
 
-        axios.post('/patient/health-quiz/finish', {
+        axios.post(this.buildUrl('/patient/health-quiz/finish'), {
             quiz_attempt_id: this.quizAttemptId
         })
             .then(response => {
