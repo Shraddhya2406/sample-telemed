@@ -53,12 +53,14 @@
                     Answer a quick health diagnosis and get personalized medicine recommendations based on your symptoms.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="{{ route('register') }}" class="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                        Get Started
-                    </a>
-                    <a href="{{ route('login') }}" class="bg-white text-blue-600 px-8 py-4 rounded-lg border-2 border-blue-600 hover:bg-blue-50 transition-colors font-semibold text-lg shadow-md">
-                        Login
-                    </a>
+                    @guest
+                        <a href="{{ route('register') }}" class="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                            Get Started
+                        </a>
+                        <a href="{{ route('login') }}" class="bg-white text-blue-600 px-8 py-4 rounded-lg border-2 border-blue-600 hover:bg-blue-50 transition-colors font-semibold text-lg shadow-md">
+                            Login
+                        </a>
+                    @endguest
                 </div>
             </div>
         </div>
