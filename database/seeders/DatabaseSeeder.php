@@ -11,6 +11,7 @@ use Database\Seeders\AppointmentSeeder;
 use Database\Seeders\HealthQuestionSeeder;
 use Database\Seeders\HealthOptionSeeder;
 use Database\Seeders\MedicineRecommendationSeeder;
+use Database\Seeders\MedicineSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -28,6 +29,7 @@ class DatabaseSeeder extends Seeder
             HealthQuestionSeeder::class,
             HealthOptionSeeder::class,
             MedicineRecommendationSeeder::class,
+            MedicineSeeder::class,
         ]);
     }
 }

@@ -1,4 +1,4 @@
-@extends('layouts.patient')
+@extends('layouts.app')
 
 @section('content')
 <div class="max-w-2xl mx-auto">

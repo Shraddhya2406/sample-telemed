@@ -1,9 +1,9 @@
-@extends('layouts.app')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div class="max-w-4xl mx-auto">
     <div class="bg-white p-6 rounded shadow mb-6">
-        <h2 class="text-3xl font-bold mb-4">Welcome to Your Dashboard, {{ Auth::user()->name }}</h2>
+        <h2 class="text-3xl font-bold mb-4">Welcome to Your Dashboard, <?php echo e(Auth::user()->name); ?></h2>
         <p class="text-gray-600">Manage your health and appointments from here.</p>
     </div>
 
@@ -13,7 +13,7 @@
         <div class="bg-blue-50 p-6 rounded shadow border-l-4 border-blue-600">
             <h3 class="text-xl font-bold mb-2">Health Assessment Quiz</h3>
             <p class="text-gray-600 mb-4">Take our health assessment quiz to get personalized medicine recommendations based on your symptoms.</p>
-            <a href="{{ route('patient.health-quiz') }}" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            <a href="<?php echo e(route('patient.health-quiz')); ?>" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                 Start Quiz
             </a>
         </div>
@@ -22,7 +22,7 @@
         <div class="bg-indigo-50 p-6 rounded shadow border-l-4 border-indigo-600">
             <h3 class="text-xl font-bold mb-2">Medicine Store</h3>
             <p class="text-gray-600 mb-4">Browse and purchase medicines online from our integrated pharmacy.</p>
-            <a href="{{ url('/patient/medicines') }}" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+            <a href="<?php echo e(url('/patient/medicines')); ?>" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
                 Visit Store
             </a>
         </div>
@@ -31,7 +31,7 @@
         <div class="bg-teal-50 p-6 rounded shadow border-l-4 border-teal-600">
             <h3 class="text-xl font-bold mb-2">My Orders</h3>
             <p class="text-gray-600 mb-4">View your past medicine orders, statuses, and order details.</p>
-            <a href="{{ url('/patient/orders') }}" class="inline-block bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">
+            <a href="<?php echo e(url('/patient/orders')); ?>" class="inline-block bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">
                 View Orders
             </a>
         </div>
@@ -60,7 +60,7 @@
         <div class="bg-yellow-50 p-6 rounded shadow border-l-4 border-yellow-600">
             <h3 class="text-xl font-bold mb-2">Health Tips</h3>
             <p class="text-gray-600 mb-4">Get daily health tips and wellness advice.</p>
-            <a href="{{ url('/patient/health-tips') }}" class="inline-block bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
+            <a href="<?php echo e(url('/patient/health-tips')); ?>" class="inline-block bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
                 Read Tips
             </a>
         </div>
@@ -74,4 +74,5 @@
         </p>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\wamp64\www\vibe_code\sample-telemed\resources\views/dashboard/patient.blade.php ENDPATH**/ ?>
