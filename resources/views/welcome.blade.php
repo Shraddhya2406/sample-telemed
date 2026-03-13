@@ -50,7 +50,7 @@
                     <span class="text-blue-600">Made Simple</span>
                 </h1>
                 <p class="text-xl md:text-2xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-                    Answer a quick health quiz and get personalized medicine recommendations based on your symptoms.
+                    Answer a quick health diagnosis and get personalized medicine recommendations based on your symptoms.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     <a href="{{ route('register') }}" class="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">

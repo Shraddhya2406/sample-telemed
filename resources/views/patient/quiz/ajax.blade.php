@@ -7,7 +7,7 @@
         <!-- Initial Loading State -->
         <div id="quiz-loading" class="text-center">
             <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-            <p class="mt-2 text-gray-600">Starting quiz...</p>
+            <p class="mt-2 text-gray-600">Starting diagnosis...</p>
         </div>
 
         <!-- Question Section -->
@@ -66,7 +66,7 @@
     <!-- Disclaimer -->
     <div class="mt-6 bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded">
         <p class="text-yellow-800 text-sm">
-            <strong>⚠️ Disclaimer:</strong> This quiz provides medicine recommendations, not a medical diagnosis. 
+            <strong>⚠️ Disclaimer:</strong> This assessment provides medicine recommendations, not a medical diagnosis. 
             Please consult with a qualified healthcare professional for proper diagnosis and treatment.
         </p>
     </div>

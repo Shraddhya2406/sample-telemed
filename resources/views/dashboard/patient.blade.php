@@ -11,10 +11,10 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Health Assessment Quiz Card -->
         <div class="bg-blue-50 p-6 rounded shadow border-l-4 border-blue-600">
-            <h3 class="text-xl font-bold mb-2">Health Assessment Quiz</h3>
-            <p class="text-gray-600 mb-4">Take our health assessment quiz to get personalized medicine recommendations based on your symptoms.</p>
+            <h3 class="text-xl font-bold mb-2">Health Assessment Diagnosis</h3>
+            <p class="text-gray-600 mb-4">Take our health assessment diagnosis to get personalized medicine recommendations based on your symptoms.</p>
             <a href="{{ route('patient.health-quiz') }}" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                Start Quiz
+                Start Diagnosis
             </a>
         </div>
 
@@ -69,7 +69,7 @@
     <!-- Disclaimer Section -->
     <div class="mt-6 bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded">
         <p class="text-yellow-800 text-sm">
-            <strong>⚠️ Disclaimer:</strong> The health assessment quiz provides medicine recommendations, not a medical diagnosis. 
+            <strong>⚠️ Disclaimer:</strong> The health assessment provides medicine recommendations, not a medical diagnosis. 
             Please consult with a qualified healthcare professional for proper diagnosis and treatment.
         </p>
     </div>

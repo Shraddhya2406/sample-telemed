@@ -4,7 +4,7 @@
     "name": "index"
   },
   "resources/css/app.css": {
-    "file": "assets/app-Auzl-Rir.css",
+    "file": "assets/app-DuwvgL6P.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -22,7 +22,7 @@
     ]
   },
   "resources/js/quiz-ajax.js": {
-    "file": "assets/quiz-ajax-Bsx5K05s.js",
+    "file": "assets/quiz-ajax-DCJ3YTrZ.js",
     "name": "quiz-ajax",
     "src": "resources/js/quiz-ajax.js",
     "isEntry": true,
