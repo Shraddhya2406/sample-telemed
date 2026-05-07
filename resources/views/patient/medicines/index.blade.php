@@ -8,13 +8,10 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         @foreach($medicines as $medicine)
             <div class="border rounded p-4 bg-white shadow-sm">
-                @if($medicine->image)
-                    <img src="{{ asset($medicine->image) }}" alt="{{ $medicine->name }}" class="h-32 w-full object-cover mb-2">
-                @else
-                    <img src="{{ asset('images/medicine-default.svg') }}" alt="{{ $medicine->name }}" class="h-32 w-full object-cover mb-2">
-                @endif
+                <img src="{{ $medicine->image_url }}" alt="{{ $medicine->name }}" class="h-32 w-full object-cover mb-2">
 
                 <h2 class="font-medium">{{ $medicine->name }}</h2>
+                <p class="text-xs text-gray-500 mt-1">{{ $medicine->category_name }}</p>
                 <p class="text-sm text-gray-600">{{ Str::limit($medicine->description, 80) }}</p>
                 <div class="mt-2 flex items-center justify-between">
                     <span class="font-semibold">₹{{ number_format($medicine->price, 2) }}</span>

@@ -3,8 +3,17 @@
     "file": "assets/index-B9ygI19o.js",
     "name": "index"
   },
+  "resources/css/admin.css": {
+    "file": "assets/admin-MqG4R_e_.css",
+    "src": "resources/css/admin.css",
+    "isEntry": true,
+    "name": "admin",
+    "names": [
+      "admin.css"
+    ]
+  },
   "resources/css/app.css": {
-    "file": "assets/app-B4WKJPvo.css",
+    "file": "assets/app-DCYCpfUZ.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",

@@ -12,10 +12,17 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
+        'payment_id',
         'user_id',
         'total_amount',
+        'amount',
         'status',
         'payment_method',
+    ];
+
+    protected $casts = [
+        'total_amount' => 'decimal:2',
+        'amount' => 'decimal:2',
     ];
 
     public function user(): BelongsTo

@@ -4,6 +4,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\MediaController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\MedicineCategoryController as AdminMedicineCategoryController;
+use App\Http\Controllers\Admin\MedicineController as AdminMedicineController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Patient\HealthQuizController;
 use App\Http\Controllers\Patient\MedicineController;
 use App\Http\Controllers\Patient\CartController;
@@ -13,6 +19,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/media/public/{path}', [MediaController::class, 'showPublicFile'])
+    ->where('path', '.*')
+    ->name('media.public');
+
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 
@@ -21,10 +31,19 @@ Route::post('/register', [RegisterController::class, 'register']);
 
 Route::post('/logout', [LogoutController::class, 'logout'])->name('logout');
 
+Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
+
+    Route::patch('categories/{category}/toggle-status', [AdminMedicineCategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
+    Route::resource('categories', AdminMedicineCategoryController::class)->except(['show']);
+    Route::patch('medicines/{medicine}/toggle-status', [AdminMedicineController::class, 'toggleStatus'])->name('medicines.toggle-status');
+    Route::resource('medicines', AdminMedicineController::class);
+    Route::resource('orders', AdminOrderController::class)->only(['index', 'show', 'update']);
+    Route::resource('users', AdminUserController::class)->only(['index', 'show', 'edit', 'update']);
+});
+
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/dashboard/admin', function () {
-        return view('dashboard.admin');
-    })->name('dashboard.admin');
+    Route::redirect('/dashboard/admin', '/admin/dashboard')->name('dashboard.admin');
 });
 
 Route::middleware(['auth', 'role:doctor'])->group(function () {

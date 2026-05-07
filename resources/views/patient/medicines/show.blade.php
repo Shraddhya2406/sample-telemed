@@ -6,15 +6,22 @@
     <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow-sm">
         <div class="flex gap-6">
             <div class="w-1/3">
-                @if($medicine->image)
-                    <img src="{{ asset($medicine->image) }}" alt="{{ $medicine->name }}" class="w-full h-56 object-cover">
-                @else
-                    <img src="{{ asset('images/medicine-default.svg') }}" alt="{{ $medicine->name }}" class="w-full h-56 object-cover">
+                <img src="{{ $medicine->image_url }}" alt="{{ $medicine->name }}" class="w-full h-56 object-cover">
+                @if($medicine->images->count() > 1)
+                    <div class="grid grid-cols-3 gap-2 mt-3">
+                        @foreach($medicine->images as $image)
+                            <img
+                                src="{{ Str::startsWith($image->image_path, 'images/') ? asset($image->image_path) : route('media.public', ['path' => $image->image_path]) }}"
+                                alt="{{ $medicine->name }}"
+                                class="w-full h-20 object-cover rounded border {{ $image->is_thumbnail ? 'ring-2 ring-blue-500' : '' }}"
+                            >
+                        @endforeach
+                    </div>
                 @endif
             </div>
             <div class="flex-1">
                 <h1 class="text-2xl font-semibold">{{ $medicine->name }}</h1>
-                <p class="text-sm text-gray-600 mt-2">{{ $medicine->category }}</p>
+                <p class="text-sm text-gray-600 mt-2">{{ $medicine->category_name }}</p>
                 <p class="mt-4 text-gray-700">{{ $medicine->description }}</p>
 
                 <div class="mt-4 flex items-center gap-4">

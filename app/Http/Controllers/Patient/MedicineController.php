@@ -11,6 +11,7 @@ class MedicineController extends Controller
     public function index(Request $request)
     {
         $medicines = Medicine::where('is_active', true)
+            ->with(['medicineCategory:id,name', 'images'])
             ->orderBy('name')
             ->paginate(12);
 
@@ -22,6 +23,8 @@ class MedicineController extends Controller
         if (! $medicine->is_active) {
             abort(404);
         }
+
+        $medicine->load(['medicineCategory:id,name', 'images']);
 
         return view('patient.medicines.show', compact('medicine'));
     }

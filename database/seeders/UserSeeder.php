@@ -44,6 +44,8 @@ class UserSeeder extends Seeder
                     'name' => $user['name'],
                     'password' => $user['password'],
                     'role_id' => $user['role_id'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]
             );
         }
