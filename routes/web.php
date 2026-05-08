@@ -14,6 +14,7 @@ use App\Http\Controllers\Patient\HealthQuizController;
 use App\Http\Controllers\Patient\MedicineController;
 use App\Http\Controllers\Patient\CartController;
 use App\Http\Controllers\Patient\OrderController;
+use App\Http\Controllers\RazorpayController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -71,6 +72,11 @@ Route::middleware(['auth', 'role:patient'])->group(function () {
     Route::post('/patient/health-quiz/finish', [HealthQuizController::class, 'finishQuiz']);
 
     Route::get('/patient/health-quiz/result/{id}', [HealthQuizController::class, 'showResult'])->name('patient.health-quiz.result');
+
+    Route::prefix('api')->group(function () {
+        Route::post('/create-order', [RazorpayController::class, 'createOrder'])->name('razorpay.create-order');
+        Route::post('/verify-payment', [RazorpayController::class, 'verifyPayment'])->name('razorpay.verify-payment');
+    });
 
     // Pharmacy module routes
     Route::prefix('patient')->name('patient.')->group(function () {
