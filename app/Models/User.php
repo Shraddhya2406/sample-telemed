@@ -66,6 +66,41 @@ class User extends Authenticatable
         return $this->hasOne(Cart::class);
     }
 
+    public function doctor(): HasOne
+    {
+        return $this->hasOne(Doctor::class);
+    }
+
+    public function doctorProfile(): HasOne
+    {
+        return $this->hasOne(DoctorProfile::class);
+    }
+
+    public function patientAppointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class, 'patient_id');
+    }
+
+    public function doctorAppointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class, 'doctor_id');
+    }
+
+    public function patientPrescriptions(): HasMany
+    {
+        return $this->hasMany(Prescription::class, 'patient_id');
+    }
+
+    public function doctorPrescriptions(): HasMany
+    {
+        return $this->hasMany(Prescription::class, 'doctor_id');
+    }
+
+    public function quizAttempts(): HasMany
+    {
+        return $this->hasMany(QuizAttempt::class);
+    }
+
     /**
      * User orders.
      */

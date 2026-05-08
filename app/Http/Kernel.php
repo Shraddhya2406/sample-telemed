@@ -4,6 +4,7 @@ namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\DoctorMiddleware;
 
 class Kernel extends HttpKernel
 {
@@ -39,5 +40,6 @@ class Kernel extends HttpKernel
     protected $middlewareAliases = [
         // ...existing middleware...
         'role' => CheckRole::class,
+        'is_doctor' => DoctorMiddleware::class,
     ];
 }

@@ -9,7 +9,11 @@ class Prescription extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['appointment_id', 'doctor_id', 'patient_id', 'medicines', 'notes'];
+    protected $fillable = ['appointment_id', 'doctor_id', 'patient_id', 'medicines', 'notes', 'diagnosis'];
+
+    protected $casts = [
+        'medicines' => 'array',
+    ];
 
     // Relationships
     public function appointment()
@@ -25,5 +29,10 @@ class Prescription extends Model
     public function patient()
     {
         return $this->belongsTo(User::class, 'patient_id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(PrescriptionItem::class);
     }
 }

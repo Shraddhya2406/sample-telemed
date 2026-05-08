@@ -14,6 +14,11 @@ use App\Http\Controllers\Patient\HealthQuizController;
 use App\Http\Controllers\Patient\MedicineController;
 use App\Http\Controllers\Patient\CartController;
 use App\Http\Controllers\Patient\OrderController;
+use App\Http\Controllers\Patient\PrescriptionController as PatientPrescriptionController;
+use App\Http\Controllers\Doctor\DoctorDashboardController;
+use App\Http\Controllers\Doctor\DoctorAppointmentController;
+use App\Http\Controllers\Doctor\DoctorPrescriptionController;
+use App\Http\Controllers\Doctor\DoctorPatientController;
 use App\Http\Controllers\RazorpayController;
 
 Route::get('/', function () {
@@ -48,9 +53,26 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:doctor'])->group(function () {
-    Route::get('/dashboard/doctor', function () {
-        return view('dashboard.doctor');
-    })->name('dashboard.doctor');
+    Route::redirect('/dashboard/doctor', '/doctor/dashboard')->name('dashboard.doctor');
+});
+
+Route::middleware(['auth', 'is_doctor'])->prefix('doctor')->name('doctor.')->group(function () {
+    Route::get('/dashboard', DoctorDashboardController::class)->name('dashboard');
+    Route::post('/availability', [DoctorDashboardController::class, 'updateAvailability'])->name('availability.update');
+
+    Route::get('/patients', [DoctorPatientController::class, 'index'])->name('patients.index');
+    Route::get('/patients/{patient}', [DoctorPatientController::class, 'show'])->name('patients.show');
+
+    Route::get('/appointments', [DoctorAppointmentController::class, 'index'])->name('appointments.index');
+    Route::get('/appointments/{appointment}', [DoctorAppointmentController::class, 'show'])->name('appointments.show');
+    Route::patch('/appointments/{appointment}/status', [DoctorAppointmentController::class, 'updateStatus'])->name('appointments.status');
+    Route::patch('/appointments/{appointment}/notes', [DoctorAppointmentController::class, 'updateNotes'])->name('appointments.notes');
+    Route::post('/appointments/{appointment}/messages', [DoctorAppointmentController::class, 'storeMessage'])->name('appointments.messages.store');
+
+    Route::get('/prescriptions', [DoctorPrescriptionController::class, 'index'])->name('prescriptions.index');
+    Route::get('/prescriptions/create', [DoctorPrescriptionController::class, 'create'])->name('prescriptions.create');
+    Route::post('/prescriptions', [DoctorPrescriptionController::class, 'store'])->name('prescriptions.store');
+    Route::get('/prescriptions/{prescription}', [DoctorPrescriptionController::class, 'show'])->name('prescriptions.show');
 });
 
 Route::middleware(['auth', 'role:patient'])->group(function () {
@@ -94,6 +116,9 @@ Route::middleware(['auth', 'role:patient'])->group(function () {
 
         Route::get('/orders', [OrderController::class, 'myOrders'])->name('orders.index');
         Route::get('/orders/{order}', [OrderController::class, 'orderDetails'])->name('orders.show');
+
+        Route::get('/prescriptions', [PatientPrescriptionController::class, 'index'])->name('prescriptions.index');
+        Route::get('/prescriptions/{prescription}', [PatientPrescriptionController::class, 'show'])->name('prescriptions.show');
 
         // Health Tips page
         Route::get('/health-tips', function () {

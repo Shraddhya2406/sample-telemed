@@ -55,6 +55,11 @@ class Medicine extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function prescriptionItems(): HasMany
+    {
+        return $this->hasMany(PrescriptionItem::class);
+    }
+
     public function getCategoryNameAttribute(): string
     {
         return $this->medicineCategory?->name ?? ($this->category ?: 'Uncategorized');

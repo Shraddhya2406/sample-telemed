@@ -18,7 +18,8 @@
             <nav class="flex items-center space-x-4">
                 <a href="{{ url('/') }}" class="text-gray-700 hover:text-blue-600">Home</a>
                 @auth
-                    <a href="{{ url('/dashboard/patient') }}" class="text-gray-700 hover:text-blue-600">Dashboard</a>
+                    @php $roleName = Auth::user()->role?->name; @endphp
+                    <a href="{{ $roleName === 'doctor' ? route('doctor.dashboard') : url('/dashboard/patient') }}" class="text-gray-700 hover:text-blue-600">Dashboard</a>
                     <a href="{{ url('/patient/medicines') }}" class="text-gray-700 hover:text-blue-600">Store</a>
 
                     <!-- Cart link with persistent badge -->

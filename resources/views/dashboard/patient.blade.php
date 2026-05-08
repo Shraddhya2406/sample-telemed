@@ -36,6 +36,14 @@
             </a>
         </div>
 
+        <div class="bg-emerald-50 p-6 rounded shadow border-l-4 border-emerald-600">
+            <h3 class="text-xl font-bold mb-2">My Prescriptions</h3>
+            <p class="text-gray-600 mb-4">Review doctor prescriptions and add medicines directly to your cart.</p>
+            <a href="{{ route('patient.prescriptions.index') }}" class="inline-block bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700">
+                View Prescriptions
+            </a>
+        </div>
+
         <!-- Appointments Card -->
         <!--
         <div class="bg-green-50 p-6 rounded shadow border-l-4 border-green-600">

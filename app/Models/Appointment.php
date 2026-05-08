@@ -9,7 +9,21 @@ class Appointment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['doctor_id', 'patient_id', 'appointment_date', 'appointment_time', 'status'];
+    protected $fillable = [
+        'doctor_id',
+        'patient_id',
+        'appointment_date',
+        'appointment_time',
+        'status',
+        'notes',
+        'symptoms',
+        'diagnosis',
+        'advice',
+    ];
+
+    protected $casts = [
+        'appointment_date' => 'date',
+    ];
 
     // Relationships
     public function doctor()
@@ -30,5 +44,10 @@ class Appointment extends Model
     public function prescription()
     {
         return $this->hasOne(Prescription::class);
+    }
+
+    public function scopeForDoctor($query, int $doctorId)
+    {
+        return $query->where('doctor_id', $doctorId);
     }
 }
