@@ -58,7 +58,10 @@
                     <p class="text-gray-700">{{ $appointment->advice ?: 'Pending' }}</p>
                 </div>
                 @if($appointment->prescription)
-                    <a href="{{ route('patient.prescriptions.show', $appointment->prescription) }}" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">View Prescription</a>
+                    <div class="flex flex-wrap gap-2">
+                        <a href="{{ route('patient.prescriptions.show', $appointment->prescription) }}" class="inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">View Prescription</a>
+                        <a href="{{ route('patient.prescriptions.show', ['prescription' => $appointment->prescription, 'print' => 1]) }}" class="inline-block bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900">Print Prescription</a>
+                    </div>
                 @endif
             </div>
         </div>

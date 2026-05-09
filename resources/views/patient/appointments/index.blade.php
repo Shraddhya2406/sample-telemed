@@ -57,7 +57,10 @@
                             </td>
                             <td class="p-4">
                                 @if($appointment->prescription)
-                                    <a href="{{ route('patient.prescriptions.show', $appointment->prescription) }}" class="text-indigo-600 hover:underline">View</a>
+                                    <div class="flex flex-wrap gap-3">
+                                        <a href="{{ route('patient.prescriptions.show', $appointment->prescription) }}" class="text-indigo-600 hover:underline">View</a>
+                                        <a href="{{ route('patient.prescriptions.show', ['prescription' => $appointment->prescription, 'print' => 1]) }}" class="text-gray-800 hover:underline">Print</a>
+                                    </div>
                                 @else
                                     <span class="text-gray-500">Not issued</span>
                                 @endif

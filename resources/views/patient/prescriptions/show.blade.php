@@ -4,13 +4,16 @@
 
 @section('content')
 <div class="max-w-5xl mx-auto">
-    <div class="bg-white p-6 rounded shadow">
+    <div id="prescription-print-toolbar" class="mb-4 flex justify-end">
+        <button onclick="window.print()" class="bg-green-200 px-4 py-2 rounded hover:bg-green-200" type="button">Print Prescription</button>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow print-area">
         <div class="flex flex-col md:flex-row md:justify-between gap-3 mb-6">
             <div>
-                <h1 class="text-2xl font-bold">Prescription</h1>
+                <h1 class="text-2xl font-bold">Sample Telemed</h1>
                 <p class="text-gray-600">Dr. {{ $prescription->doctor->name }} · {{ $prescription->created_at->format('d M Y') }}</p>
             </div>
-            <button onclick="window.print()" class="bg-gray-800 text-white px-4 py-2 rounded">Print</button>
         </div>
 
         @if($prescription->diagnosis)
@@ -27,7 +30,7 @@
                         <th class="p-3 border">Medicine</th>
                         <th class="p-3 border">Dosage</th>
                         <th class="p-3 border">Duration</th>
-                        <th class="p-3 border">Buy</th>
+                        <th class="p-3 border no-print">Buy</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -39,7 +42,7 @@
                             </td>
                             <td class="p-3 border">{{ $item->dosage }}</td>
                             <td class="p-3 border">{{ $item->duration }}</td>
-                            <td class="p-3 border">
+                            <td class="p-3 border no-print">
                                 <form method="POST" action="{{ route('patient.cart.add') }}">
                                     @csrf
                                     <input type="hidden" name="medicine_id" value="{{ $item->medicine_id }}">
@@ -61,4 +64,11 @@
         @endif
     </div>
 </div>
+@if(request()->boolean('print'))
+    <script>
+        window.addEventListener('load', function () {
+            window.print();
+        });
+    </script>
+@endif
 @endsection

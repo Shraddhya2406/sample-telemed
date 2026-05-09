@@ -6,6 +6,15 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'Sample Telemed'))</title>
     @vite('resources/css/app.css')
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { position: absolute; inset: 0; width: 100%; box-shadow: none !important; }
+            #prescription-print-toolbar { display: none !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
 </head>
 <body class="bg-gray-100 text-gray-800 min-h-screen">
     <header class="bg-white shadow">
