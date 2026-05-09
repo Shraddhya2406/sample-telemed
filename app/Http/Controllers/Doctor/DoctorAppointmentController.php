@@ -57,14 +57,22 @@ class DoctorAppointmentController extends Controller
     {
         $this->authorizeDoctorAppointment($request, $appointment);
 
+        if (in_array($appointment->status, ['rejected', 'completed'], true)) {
+            return back()->withErrors(['appointment' => 'Consultation notes cannot be edited after an appointment is rejected or completed.']);
+        }
+
         $validated = $request->validate([
-            'symptoms' => ['nullable', 'string', 'max:2000'],
-            'diagnosis' => ['nullable', 'string', 'max:2000'],
-            'advice' => ['nullable', 'string', 'max:2000'],
-            'notes' => ['nullable', 'string', 'max:2000'],
+            'diagnosis' => ['required', 'string', 'max:2000'],
+            'advice' => ['required', 'string', 'max:2000'],
         ]);
 
         $appointment->update($validated);
+
+        if ($request->input('next') === 'prescription') {
+            return redirect()
+                ->route('doctor.prescriptions.create', ['appointment_id' => $appointment->id])
+                ->with('success', 'Consultation notes saved. You can create the prescription now.');
+        }
 
         return back()->with('success', 'Consultation notes saved.');
     }

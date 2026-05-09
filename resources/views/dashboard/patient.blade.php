@@ -44,16 +44,13 @@
             </a>
         </div>
 
-        <!-- Appointments Card -->
-        <!--
         <div class="bg-green-50 p-6 rounded shadow border-l-4 border-green-600">
             <h3 class="text-xl font-bold mb-2">Appointments</h3>
             <p class="text-gray-600 mb-4">View, manage, and schedule your appointments with doctors.</p>
-            <button disabled class="inline-block bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed" title="Coming Soon">
+            <a href="{{ route('patient.appointments.index') }}" class="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                 View Appointments
-            </button>
+            </a>
         </div>
-        -->
         <!-- Medical History Card -->
         <!--
         <div class="bg-purple-50 p-6 rounded shadow border-l-4 border-purple-600">

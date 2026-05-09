@@ -52,8 +52,8 @@
                     <div class="small text-secondary mb-2">{{ $attempt->created_at->format('d M Y h:i A') }}</div>
                     @foreach($attempt->quizAnswers as $answer)
                         <div class="mb-2 small">
-                            <strong>{{ $answer->healthQuestion->question }}</strong><br>
-                            {{ $answer->healthOption->option_text }}
+                            <strong>{{ $answer->healthQuestion?->question ?? 'Question unavailable' }}</strong><br>
+                            {{ $answer->healthOption?->option_text ?? 'Answer unavailable' }}
                         </div>
                     @endforeach
                 </div>

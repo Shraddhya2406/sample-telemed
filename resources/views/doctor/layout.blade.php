@@ -21,6 +21,12 @@
         .doctor-card { background: #fff; border: 1px solid #dbe7ee; border-radius: .5rem; box-shadow: 0 8px 24px rgba(15, 118, 110, .07); }
         .status-dot { width: .6rem; height: .6rem; border-radius: 50%; display: inline-block; }
         @media (max-width: 991.98px) { .doctor-sidebar { width: 100%; } }
+        @media print {
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { position: absolute; inset: 0; width: 100%; border: 0 !important; box-shadow: none !important; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body>

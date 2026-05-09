@@ -54,6 +54,28 @@ class DoctorDashboardController extends Controller
             'slots.*.end_time' => ['required', 'date_format:H:i', 'after:slots.*.start_time'],
         ]);
 
+        $overlappingSlot = collect($validated['slots'] ?? [])
+            ->groupBy('day_of_week')
+            ->contains(function ($daySlots) {
+                $sortedSlots = $daySlots
+                    ->sortBy('start_time')
+                    ->values();
+
+                for ($i = 1; $i < $sortedSlots->count(); $i++) {
+                    if ($sortedSlots[$i]['start_time'] < $sortedSlots[$i - 1]['end_time']) {
+                        return true;
+                    }
+                }
+
+                return false;
+            });
+
+        if ($overlappingSlot) {
+            return back()
+                ->withInput()
+                ->withErrors(['slots' => 'Availability slots on the same day cannot overlap. Please adjust repeated or overlapping time ranges.']);
+        }
+
         $doctorId = $request->user()->id;
 
         DoctorAvailability::where('doctor_id', $doctorId)->delete();

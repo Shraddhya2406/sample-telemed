@@ -23,19 +23,36 @@ class DoctorPrescriptionController extends Controller
         return view('doctor.prescriptions.index', compact('prescriptions'));
     }
 
-    public function create(Request $request): View
+    public function create(Request $request): View|RedirectResponse
     {
         $doctorId = $request->user()->id;
+        $selectedAppointment = null;
+
+        if ($request->filled('appointment_id')) {
+            $selectedAppointment = Appointment::forDoctor($doctorId)
+                ->whereKey($request->integer('appointment_id'))
+                ->firstOrFail();
+
+            if (blank($selectedAppointment->diagnosis) || blank($selectedAppointment->advice)) {
+                return redirect()
+                    ->route('doctor.appointments.show', $selectedAppointment)
+                    ->withErrors(['appointment' => 'Diagnosis and advice are required before creating a prescription.']);
+            }
+        }
 
         $appointments = Appointment::with('patient')
             ->forDoctor($doctorId)
-            ->whereIn('status', ['approved', 'completed'])
+            ->where('status', 'approved')
+            ->whereNotNull('diagnosis')
+            ->where('diagnosis', '<>', '')
+            ->whereNotNull('advice')
+            ->where('advice', '<>', '')
             ->latest('appointment_date')
             ->get();
 
         $medicines = Medicine::where('is_active', true)->orderBy('name')->get();
 
-        return view('doctor.prescriptions.create', compact('appointments', 'medicines'));
+        return view('doctor.prescriptions.create', compact('appointments', 'medicines', 'selectedAppointment'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -49,7 +66,7 @@ class DoctorPrescriptionController extends Controller
 
         $validated = $request->validate([
             'appointment_id' => ['required', 'exists:appointments,id'],
-            'diagnosis' => ['nullable', 'string', 'max:2000'],
+            'diagnosis' => ['required', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:3000'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.medicine_id' => ['required', 'exists:medicines,id'],
@@ -60,6 +77,18 @@ class DoctorPrescriptionController extends Controller
 
         $appointment = Appointment::findOrFail($validated['appointment_id']);
         abort_unless($appointment->doctor_id === $request->user()->id, 403);
+
+        if ($appointment->status !== 'approved') {
+            return back()
+                ->withInput()
+                ->withErrors(['appointment_id' => 'Prescriptions can only be created for accepted appointments.']);
+        }
+
+        if (blank($appointment->diagnosis) || blank($appointment->advice)) {
+            return back()
+                ->withInput()
+                ->withErrors(['appointment_id' => 'Diagnosis and advice are required before creating a prescription.']);
+        }
 
         $prescription = DB::transaction(function () use ($appointment, $request, $validated) {
             $prescription = Prescription::updateOrCreate(

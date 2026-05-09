@@ -15,6 +15,7 @@ use App\Http\Controllers\Patient\MedicineController;
 use App\Http\Controllers\Patient\CartController;
 use App\Http\Controllers\Patient\OrderController;
 use App\Http\Controllers\Patient\PrescriptionController as PatientPrescriptionController;
+use App\Http\Controllers\Patient\AppointmentController as PatientAppointmentController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
 use App\Http\Controllers\Doctor\DoctorAppointmentController;
 use App\Http\Controllers\Doctor\DoctorPrescriptionController;
@@ -116,6 +117,13 @@ Route::middleware(['auth', 'role:patient'])->group(function () {
 
         Route::get('/orders', [OrderController::class, 'myOrders'])->name('orders.index');
         Route::get('/orders/{order}', [OrderController::class, 'orderDetails'])->name('orders.show');
+
+        Route::get('/appointments', [PatientAppointmentController::class, 'index'])->name('appointments.index');
+        Route::get('/appointments/create', [PatientAppointmentController::class, 'create'])->name('appointments.create');
+        Route::post('/appointments', [PatientAppointmentController::class, 'store'])->name('appointments.store');
+        Route::get('/appointments/{appointment}', [PatientAppointmentController::class, 'show'])->name('appointments.show');
+        Route::patch('/appointments/{appointment}/cancel', [PatientAppointmentController::class, 'cancel'])->name('appointments.cancel');
+        Route::post('/appointments/{appointment}/messages', [PatientAppointmentController::class, 'storeMessage'])->name('appointments.messages.store');
 
         Route::get('/prescriptions', [PatientPrescriptionController::class, 'index'])->name('prescriptions.index');
         Route::get('/prescriptions/{prescription}', [PatientPrescriptionController::class, 'show'])->name('prescriptions.show');

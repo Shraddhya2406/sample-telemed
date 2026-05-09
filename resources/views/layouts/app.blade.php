@@ -20,9 +20,13 @@
                 @auth
                     @php $roleName = Auth::user()->role?->name; @endphp
                     <a href="{{ $roleName === 'doctor' ? route('doctor.dashboard') : url('/dashboard/patient') }}" class="text-gray-700 hover:text-blue-600">Dashboard</a>
-                    <a href="{{ url('/patient/medicines') }}" class="text-gray-700 hover:text-blue-600">Store</a>
+                    @if($roleName === 'patient')
+                        <a href="{{ route('patient.appointments.index') }}" class="text-gray-700 hover:text-blue-600">Appointments</a>
+                        <a href="{{ url('/patient/medicines') }}" class="text-gray-700 hover:text-blue-600">Store</a>
+                    @endif
 
                     <!-- Cart link with persistent badge -->
+                    @if($roleName === 'patient')
                     <a href="{{ url('/patient/cart') }}" class="relative text-gray-700 hover:text-blue-600" id="cart-link">
                         Cart
                         @php
@@ -37,6 +41,7 @@
                         @endphp
                         <span id="cart-count-badge" class="absolute -top-2 -right-6 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full" style="{{ $cartCount > 0 ? '' : 'display:none' }}">{{ $cartCount }}</span>
                     </a>
+                    @endif
 
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf

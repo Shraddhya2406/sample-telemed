@@ -10,7 +10,7 @@
             <h2 class="h4 mb-1">{{ config('app.name', 'Sample Telemed') }}</h2>
             <div class="text-secondary">Dr. {{ $prescription->doctor->name }}</div>
         </div>
-        <button onclick="window.print()" class="btn btn-outline-success"><i class="bi bi-printer me-1"></i> Print</button>
+        <button onclick="window.print()" class="btn btn-outline-success no-print"><i class="bi bi-printer me-1"></i> Print</button>
     </div>
     <div class="row g-3 mb-4">
         <div class="col-md-4"><strong>Patient</strong><br>{{ $prescription->patient->name }}</div>

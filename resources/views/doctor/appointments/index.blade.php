@@ -24,7 +24,14 @@
                         <td>{{ substr($appointment->appointment_time, 0, 5) }}</td>
                         <td><span class="badge text-bg-{{ $statusClasses[$appointment->status] ?? 'secondary' }}">{{ $statusLabels[$appointment->status] ?? ucfirst($appointment->status) }}</span></td>
                         <td class="text-secondary">{{ \Illuminate\Support\Str::limit($appointment->notes ?: $appointment->symptoms, 48) }}</td>
-                        <td class="text-end"><a href="{{ route('doctor.appointments.show', $appointment) }}" class="btn btn-sm btn-outline-success">Manage</a></td>
+                        <td class="text-end">
+                            <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                @if($appointment->status === 'completed' && $appointment->prescription)
+                                    <a href="{{ route('doctor.prescriptions.show', $appointment->prescription) }}" class="btn btn-sm btn-outline-primary">View Prescription</a>
+                                @endif
+                                <a href="{{ route('doctor.appointments.show', $appointment) }}" class="btn btn-sm btn-outline-success">Manage</a>
+                            </div>
+                        </td>
                     </tr>
                 @empty
                     <tr><td colspan="6" class="text-center text-secondary py-4">No appointments found.</td></tr>
