@@ -9,7 +9,12 @@ class DoctorProfile extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'specialization', 'experience_years', 'license_number', 'qualification', 'bio', 'is_verified'];
+    protected $fillable = ['user_id', 'specialization', 'experience_years', 'license_number', 'qualification', 'consultation_fee', 'bio', 'is_verified'];
+
+    protected $casts = [
+        'consultation_fee' => 'decimal:2',
+        'is_verified' => 'boolean',
+    ];
 
     // Relationships
     public function user()

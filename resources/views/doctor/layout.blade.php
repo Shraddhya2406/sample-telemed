@@ -45,7 +45,7 @@
                 <a class="doctor-nav-link {{ request()->routeIs('doctor.patients.*') ? 'active' : '' }}" href="{{ route('doctor.patients.index') }}"><i class="bi bi-people-fill"></i><span>Patients</span></a>
                 <a class="doctor-nav-link {{ request()->routeIs('doctor.appointments.*') ? 'active' : '' }}" href="{{ route('doctor.appointments.index') }}"><i class="bi bi-calendar2-check-fill"></i><span>Appointments</span></a>
                 <a class="doctor-nav-link {{ request()->routeIs('doctor.prescriptions.*') ? 'active' : '' }}" href="{{ route('doctor.prescriptions.index') }}"><i class="bi bi-prescription2"></i><span>Prescriptions</span></a>
-                <a class="doctor-nav-link {{ request()->routeIs('doctor.dashboard') ? 'active' : '' }}" href="{{ route('doctor.dashboard') }}#availability"><i class="bi bi-clock-history"></i><span>Profile</span></a>
+                <a class="doctor-nav-link {{ request()->routeIs('doctor.profile') ? 'active' : '' }}" href="{{ route('doctor.profile') }}"><i class="bi bi-person-badge-fill"></i><span>Profile</span></a>
             </nav>
 
             <div class="mt-5 pt-4 border-top border-white border-opacity-25">

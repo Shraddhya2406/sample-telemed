@@ -32,6 +32,21 @@
             </span>
         </div>
 
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="border rounded p-3 bg-gray-50">
+                <div class="text-sm text-gray-600">Consultation Fee</div>
+                <div class="font-semibold">Rs. {{ number_format((float) $appointment->consultation_fee, 2) }}</div>
+            </div>
+            <div class="border rounded p-3 bg-gray-50">
+                <div class="text-sm text-gray-600">Payment Status</div>
+                <div class="font-semibold {{ $appointment->payment_status === 'paid' ? 'text-green-700' : 'text-gray-700' }}">{{ ucfirst($appointment->payment_status ?? 'unpaid') }}</div>
+            </div>
+            <div class="border rounded p-3 bg-gray-50">
+                <div class="text-sm text-gray-600">Payment ID</div>
+                <div class="font-semibold break-all">{{ $appointment->payment_id ?: 'N/A' }}</div>
+            </div>
+        </div>
+
         @if($appointment->status === 'pending')
             <form method="POST" action="{{ route('patient.appointments.cancel', $appointment) }}" class="mt-4">
                 @csrf
@@ -68,23 +83,33 @@
 
         <div class="bg-white p-6 rounded shadow">
             <h2 class="text-lg font-bold mb-3">Messages</h2>
-            <div class="space-y-3 mb-4">
-                @forelse($appointment->messages as $message)
-                    <div class="border rounded p-3">
-                        <div class="text-sm text-gray-600">{{ $message->sender->name }} · {{ $message->created_at->format('d M Y h:i A') }}</div>
-                        <p>{{ $message->message }}</p>
+            <div
+                class="space-y-3 mb-4"
+                data-chat-messages
+                data-chat-variant="patient"
+                data-fetch-url="{{ route('patient.appointments.messages.index', $appointment) }}"
+                data-last-id="{{ $appointment->messages->max('id') ?? 0 }}"
+            >
+                @forelse($appointment->messages->sortBy('id') as $message)
+                    <div class="chat-message {{ $message->sender_id === auth()->id() ? 'chat-message-own' : 'chat-message-other' }}" data-message-id="{{ $message->id }}">
+                        <div class="chat-bubble">
+                            <div class="chat-meta">{{ $message->sender_id === auth()->id() ? 'You' : $message->sender->name }} &middot; {{ $message->created_at->format('d M Y h:i A') }}</div>
+                            <div class="chat-body">{{ $message->message }}</div>
+                        </div>
                     </div>
                 @empty
-                    <p class="text-gray-600">No messages yet.</p>
+                    <p class="text-gray-600" data-chat-empty>No messages yet.</p>
                 @endforelse
             </div>
 
-            <form method="POST" action="{{ route('patient.appointments.messages.store', $appointment) }}">
+            <form method="POST" action="{{ route('patient.appointments.messages.store', $appointment) }}" data-chat-form>
                 @csrf
                 <textarea name="message" rows="3" class="w-full border rounded px-3 py-2 mb-2" placeholder="Send a message to the doctor"></textarea>
+                <div class="text-sm text-red-600 mb-2 hidden" data-chat-error></div>
                 <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" type="submit">Send Message</button>
             </form>
         </div>
     </div>
 </div>
+@include('appointments.chat-script')
 @endsection

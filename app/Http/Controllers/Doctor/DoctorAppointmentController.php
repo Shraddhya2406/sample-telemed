@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Doctor;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Message;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -77,7 +78,21 @@ class DoctorAppointmentController extends Controller
         return back()->with('success', 'Consultation notes saved.');
     }
 
-    public function storeMessage(Request $request, Appointment $appointment): RedirectResponse
+    public function messages(Request $request, Appointment $appointment): JsonResponse
+    {
+        $this->authorizeDoctorAppointment($request, $appointment);
+
+        $messages = $appointment->messages()
+            ->with('sender')
+            ->when($request->integer('after_id'), fn ($query, $afterId) => $query->where('id', '>', $afterId))
+            ->orderBy('id')
+            ->get()
+            ->map(fn (Message $message) => $this->messageResource($message, $request->user()->id));
+
+        return response()->json(['messages' => $messages]);
+    }
+
+    public function storeMessage(Request $request, Appointment $appointment): RedirectResponse|JsonResponse
     {
         $this->authorizeDoctorAppointment($request, $appointment);
 
@@ -85,13 +100,31 @@ class DoctorAppointmentController extends Controller
             'message' => ['required', 'string', 'max:1000'],
         ]);
 
-        Message::create([
+        $message = Message::create([
             'appointment_id' => $appointment->id,
             'sender_id' => $request->user()->id,
             'message' => $validated['message'],
-        ]);
+        ])->load('sender');
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Message sent.',
+                'chat_message' => $this->messageResource($message, $request->user()->id),
+            ], 201);
+        }
 
         return back()->with('success', 'Message sent.');
+    }
+
+    private function messageResource(Message $message, int $currentUserId): array
+    {
+        return [
+            'id' => $message->id,
+            'is_own' => $message->sender_id === $currentUserId,
+            'sender_name' => $message->sender?->name ?? 'Unknown',
+            'message' => $message->message,
+            'created_at' => $message->created_at?->format('d M Y h:i A'),
+        ];
     }
 
     private function authorizeDoctorAppointment(Request $request, Appointment $appointment): void

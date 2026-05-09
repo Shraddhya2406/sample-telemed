@@ -8,6 +8,8 @@ use App\Models\DoctorAvailability;
 use App\Models\Prescription;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class DoctorDashboardController extends Controller
@@ -30,12 +32,56 @@ class DoctorDashboardController extends Controller
             ->take(6)
             ->get();
 
+        return view('doctor.dashboard', compact('stats', 'appointments'));
+    }
+
+    public function profile(Request $request): View
+    {
+        $doctorId = $request->user()->id;
+
+        $request->user()->load('doctorProfile');
+
         $availabilities = DoctorAvailability::where('doctor_id', $doctorId)
             ->orderByRaw("FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')")
             ->orderBy('start_time')
             ->get();
 
-        return view('doctor.dashboard', compact('stats', 'appointments', 'availabilities'));
+        return view('doctor.profile', compact('availabilities'));
+    }
+
+    public function updateProfile(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($request->user()->id)],
+            'specialization' => ['required', 'string', 'max:255'],
+            'qualification' => ['nullable', 'string', 'max:255'],
+            'experience_years' => ['required', 'integer', 'min:0', 'max:80'],
+            'license_number' => ['required', 'string', 'max:255'],
+            'consultation_fee' => ['nullable', 'numeric', 'min:1', 'max:999999.99'],
+            'bio' => ['nullable', 'string', 'max:3000'],
+        ]);
+
+        DB::transaction(function () use ($request, $validated) {
+            $request->user()->update([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+            ]);
+
+            $request->user()->doctorProfile()->updateOrCreate(
+                ['user_id' => $request->user()->id],
+                [
+                'specialization' => $validated['specialization'],
+                'qualification' => $validated['qualification'] ?? null,
+                'experience_years' => $validated['experience_years'],
+                'license_number' => $validated['license_number'],
+                'consultation_fee' => $validated['consultation_fee'] ?? null,
+                'bio' => $validated['bio'] ?? null,
+                ]
+            );
+        });
+
+        return back()->with('success', 'Profile updated.');
     }
 
     public function updateAvailability(Request $request): RedirectResponse

@@ -19,10 +19,18 @@ class Appointment extends Model
         'symptoms',
         'diagnosis',
         'advice',
+        'consultation_fee',
+        'payment_status',
+        'payment_method',
+        'payment_id',
+        'razorpay_order_id',
+        'paid_at',
     ];
 
     protected $casts = [
         'appointment_date' => 'date',
+        'consultation_fee' => 'decimal:2',
+        'paid_at' => 'datetime',
     ];
 
     // Relationships

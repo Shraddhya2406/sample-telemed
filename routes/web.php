@@ -59,6 +59,8 @@ Route::middleware(['auth', 'role:doctor'])->group(function () {
 
 Route::middleware(['auth', 'is_doctor'])->prefix('doctor')->name('doctor.')->group(function () {
     Route::get('/dashboard', DoctorDashboardController::class)->name('dashboard');
+    Route::get('/profile', [DoctorDashboardController::class, 'profile'])->name('profile');
+    Route::post('/profile', [DoctorDashboardController::class, 'updateProfile'])->name('profile.update');
     Route::post('/availability', [DoctorDashboardController::class, 'updateAvailability'])->name('availability.update');
 
     Route::get('/patients', [DoctorPatientController::class, 'index'])->name('patients.index');
@@ -68,6 +70,7 @@ Route::middleware(['auth', 'is_doctor'])->prefix('doctor')->name('doctor.')->gro
     Route::get('/appointments/{appointment}', [DoctorAppointmentController::class, 'show'])->name('appointments.show');
     Route::patch('/appointments/{appointment}/status', [DoctorAppointmentController::class, 'updateStatus'])->name('appointments.status');
     Route::patch('/appointments/{appointment}/notes', [DoctorAppointmentController::class, 'updateNotes'])->name('appointments.notes');
+    Route::get('/appointments/{appointment}/messages', [DoctorAppointmentController::class, 'messages'])->name('appointments.messages.index');
     Route::post('/appointments/{appointment}/messages', [DoctorAppointmentController::class, 'storeMessage'])->name('appointments.messages.store');
 
     Route::get('/prescriptions', [DoctorPrescriptionController::class, 'index'])->name('prescriptions.index');
@@ -121,8 +124,11 @@ Route::middleware(['auth', 'role:patient'])->group(function () {
         Route::get('/appointments', [PatientAppointmentController::class, 'index'])->name('appointments.index');
         Route::get('/appointments/create', [PatientAppointmentController::class, 'create'])->name('appointments.create');
         Route::post('/appointments', [PatientAppointmentController::class, 'store'])->name('appointments.store');
+        Route::post('/appointments/payment/order', [PatientAppointmentController::class, 'createPaymentOrder'])->name('appointments.payment.order');
+        Route::post('/appointments/payment/verify', [PatientAppointmentController::class, 'verifyPayment'])->name('appointments.payment.verify');
         Route::get('/appointments/{appointment}', [PatientAppointmentController::class, 'show'])->name('appointments.show');
         Route::patch('/appointments/{appointment}/cancel', [PatientAppointmentController::class, 'cancel'])->name('appointments.cancel');
+        Route::get('/appointments/{appointment}/messages', [PatientAppointmentController::class, 'messages'])->name('appointments.messages.index');
         Route::post('/appointments/{appointment}/messages', [PatientAppointmentController::class, 'storeMessage'])->name('appointments.messages.store');
 
         Route::get('/prescriptions', [PatientPrescriptionController::class, 'index'])->name('prescriptions.index');

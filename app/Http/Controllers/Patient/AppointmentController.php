@@ -8,9 +8,14 @@ use App\Models\DoctorAvailability;
 use App\Models\Message;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Razorpay\Api\Api;
+use Razorpay\Api\Errors\Error as RazorpayError;
 
 class AppointmentController extends Controller
 {
@@ -45,64 +50,181 @@ class AppointmentController extends Controller
                 )
             );
 
-        return view('patient.appointments.create', compact('doctors', 'bookedSlots'));
+        $defaultAppointmentFee = $this->defaultAppointmentFee();
+
+        return view('patient.appointments.create', compact('doctors', 'bookedSlots', 'defaultAppointmentFee'));
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'doctor_id' => ['required', 'integer', 'exists:users,id'],
-            'appointment_date' => ['required', 'date', 'after_or_equal:today'],
-            'appointment_time' => ['required', 'date_format:H:i'],
-            'symptoms' => ['nullable', 'string', 'max:2000'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
+        return back()
+            ->withInput()
+            ->withErrors(['payment' => 'Please complete online payment to book an appointment.']);
+    }
 
-        $doctor = User::where('id', $validated['doctor_id'])
-            ->whereHas('role', fn ($query) => $query->where('name', 'doctor'))
-            ->firstOrFail();
-
+    public function createPaymentOrder(Request $request): JsonResponse
+    {
+        $validated = $this->validateAppointmentRequest($request);
+        $doctor = $this->findBookableDoctor((int) $validated['doctor_id']);
         $date = Carbon::parse($validated['appointment_date']);
         $time = $validated['appointment_time'];
 
-        $hasAvailability = DoctorAvailability::where('doctor_id', $doctor->id)
-            ->where('is_active', true)
-            ->where('day_of_week', $date->format('l'))
-            ->where('start_time', '<=', $time)
-            ->where('end_time', '>=', $time)
-            ->exists();
+        $availabilityError = $this->validateSlot($doctor, $date, $time);
 
-        if (! $hasAvailability) {
-            return back()
-                ->withInput()
-                ->withErrors(['appointment_time' => 'Please choose a time inside the selected doctor availability.']);
+        if ($availabilityError) {
+            return response()->json(['message' => $availabilityError], 422);
         }
 
-        $slotTaken = Appointment::where('doctor_id', $doctor->id)
-            ->whereDate('appointment_date', $date->toDateString())
-            ->where('appointment_time', $time)
-            ->whereIn('status', ['pending', 'approved'])
-            ->exists();
+        $appointmentFee = $this->doctorAppointmentFee($doctor);
+        $amountInPaisa = (int) round($appointmentFee * 100);
 
-        if ($slotTaken) {
-            return back()
-                ->withInput()
-                ->withErrors(['appointment_time' => 'That appointment slot is already booked.']);
+        if ($amountInPaisa < 100) {
+            return response()->json(['message' => 'Appointment fee is not configured correctly.'], 500);
         }
 
-        $appointment = Appointment::create([
-            'doctor_id' => $doctor->id,
-            'patient_id' => $request->user()->id,
-            'appointment_date' => $date->toDateString(),
-            'appointment_time' => $time,
-            'status' => 'pending',
-            'symptoms' => $validated['symptoms'] ?? null,
-            'notes' => $validated['notes'] ?? null,
+        $key = config('services.razorpay.key_id');
+        $secret = config('services.razorpay.key_secret');
+
+        if (! $key || ! $secret) {
+            return response()->json(['message' => 'Payment gateway not configured.'], 500);
+        }
+
+        try {
+            $this->disableProxyForRazorpay();
+
+            $api = new Api($key, $secret);
+            $razorpayOrder = $api->order->create([
+                'receipt' => 'appt_'.$request->user()->id.'_'.now()->timestamp,
+                'amount' => $amountInPaisa,
+                'currency' => 'INR',
+                'payment_capture' => 1,
+            ]);
+
+            $request->session()->put('appointment_payment_orders.'.$razorpayOrder['id'], [
+                'amount' => (int) $razorpayOrder['amount'],
+                'currency' => $razorpayOrder['currency'],
+                'appointment' => $validated,
+                'doctor_id' => $doctor->id,
+            ]);
+
+            return response()->json([
+                'order_id' => $razorpayOrder['id'],
+                'amount' => $razorpayOrder['amount'],
+                'currency' => $razorpayOrder['currency'],
+            ]);
+        } catch (RazorpayError $e) {
+            Log::error('Appointment Razorpay create order API error: '.$e->getMessage());
+
+            return response()->json(['message' => 'Could not create payment order.'], 500);
+        } catch (\Throwable $e) {
+            Log::error('Appointment Razorpay create order error: '.$e->getMessage());
+
+            return response()->json(['message' => 'Could not create payment order.'], 500);
+        }
+    }
+
+    public function verifyPayment(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'razorpay_payment_id' => ['required', 'string'],
+            'razorpay_order_id' => ['required', 'string'],
+            'razorpay_signature' => ['required', 'string'],
         ]);
 
-        return redirect()
-            ->route('patient.appointments.show', $appointment)
-            ->with('success', 'Appointment request sent to Dr. '.$doctor->name.'.');
+        $key = config('services.razorpay.key_id');
+        $secret = config('services.razorpay.key_secret');
+
+        if (! $key || ! $secret) {
+            return response()->json(['message' => 'Payment gateway not configured.'], 500);
+        }
+
+        $orderId = $validated['razorpay_order_id'];
+        $paymentId = $validated['razorpay_payment_id'];
+        $signature = $validated['razorpay_signature'];
+        $paymentOrder = $request->session()->get('appointment_payment_orders.'.$orderId);
+
+        if (! $paymentOrder || empty($paymentOrder['appointment'])) {
+            return response()->json(['message' => 'Payment session expired. Please try booking again.'], 422);
+        }
+
+        $generatedSignature = hash_hmac('sha256', $orderId.'|'.$paymentId, $secret);
+
+        if (! hash_equals($generatedSignature, $signature)) {
+            Log::warning('Appointment Razorpay signature mismatch', [
+                'payment_id' => $paymentId,
+                'razorpay_order_id' => $orderId,
+            ]);
+
+            return response()->json(['message' => 'Invalid payment signature.'], 400);
+        }
+
+        if (Appointment::where('payment_id', $paymentId)->exists()) {
+            $appointment = Appointment::where('payment_id', $paymentId)->first();
+
+            return response()->json([
+                'message' => 'Payment already verified.',
+                'appointment_id' => $appointment->id,
+                'redirect_url' => route('patient.appointments.show', $appointment),
+            ]);
+        }
+
+        $appointmentData = $paymentOrder['appointment'];
+        $doctor = $this->findBookableDoctor((int) $appointmentData['doctor_id']);
+        $date = Carbon::parse($appointmentData['appointment_date']);
+        $time = $appointmentData['appointment_time'];
+        $availabilityError = $this->validateSlot($doctor, $date, $time);
+
+        if ($availabilityError) {
+            return response()->json(['message' => $availabilityError], 422);
+        }
+
+        $appointmentFee = $this->doctorAppointmentFee($doctor);
+        $amountInPaisa = (int) round($appointmentFee * 100);
+
+        if ((int) ($paymentOrder['amount'] ?? 0) !== $amountInPaisa) {
+            return response()->json(['message' => 'Payment amount mismatch.'], 400);
+        }
+
+        try {
+            $appointment = DB::transaction(function () use ($appointmentData, $request, $doctor, $date, $time, $amountInPaisa, $paymentId, $orderId) {
+                $slotTaken = Appointment::where('doctor_id', $doctor->id)
+                    ->whereDate('appointment_date', $date->toDateString())
+                    ->where('appointment_time', $time)
+                    ->whereIn('status', ['pending', 'approved'])
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($slotTaken) {
+                    throw new \RuntimeException('That appointment slot is already booked.');
+                }
+
+                return Appointment::create([
+                    'doctor_id' => $doctor->id,
+                    'patient_id' => $request->user()->id,
+                    'appointment_date' => $date->toDateString(),
+                    'appointment_time' => $time,
+                    'status' => 'pending',
+                    'symptoms' => $appointmentData['symptoms'] ?? null,
+                    'notes' => $appointmentData['notes'] ?? null,
+                    'consultation_fee' => $amountInPaisa / 100,
+                    'payment_status' => 'paid',
+                    'payment_method' => 'razorpay',
+                    'payment_id' => $paymentId,
+                    'razorpay_order_id' => $orderId,
+                    'paid_at' => now(),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        $request->session()->forget('appointment_payment_orders.'.$orderId);
+
+        return response()->json([
+            'message' => 'Payment verified and appointment booked.',
+            'appointment_id' => $appointment->id,
+            'redirect_url' => route('patient.appointments.show', $appointment),
+        ]);
     }
 
     public function show(Request $request, Appointment $appointment): View
@@ -129,7 +251,21 @@ class AppointmentController extends Controller
             ->with('success', 'Appointment request cancelled.');
     }
 
-    public function storeMessage(Request $request, Appointment $appointment): RedirectResponse
+    public function messages(Request $request, Appointment $appointment): JsonResponse
+    {
+        $this->authorizePatientAppointment($request, $appointment);
+
+        $messages = $appointment->messages()
+            ->with('sender')
+            ->when($request->integer('after_id'), fn ($query, $afterId) => $query->where('id', '>', $afterId))
+            ->orderBy('id')
+            ->get()
+            ->map(fn (Message $message) => $this->messageResource($message, $request->user()->id));
+
+        return response()->json(['messages' => $messages]);
+    }
+
+    public function storeMessage(Request $request, Appointment $appointment): RedirectResponse|JsonResponse
     {
         $this->authorizePatientAppointment($request, $appointment);
 
@@ -137,17 +273,99 @@ class AppointmentController extends Controller
             'message' => ['required', 'string', 'max:1000'],
         ]);
 
-        Message::create([
+        $message = Message::create([
             'appointment_id' => $appointment->id,
             'sender_id' => $request->user()->id,
             'message' => $validated['message'],
-        ]);
+        ])->load('sender');
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Message sent.',
+                'chat_message' => $this->messageResource($message, $request->user()->id),
+            ], 201);
+        }
 
         return back()->with('success', 'Message sent.');
+    }
+
+    private function messageResource(Message $message, int $currentUserId): array
+    {
+        return [
+            'id' => $message->id,
+            'is_own' => $message->sender_id === $currentUserId,
+            'sender_name' => $message->sender?->name ?? 'Unknown',
+            'message' => $message->message,
+            'created_at' => $message->created_at?->format('d M Y h:i A'),
+        ];
     }
 
     private function authorizePatientAppointment(Request $request, Appointment $appointment): void
     {
         abort_unless($appointment->patient_id === $request->user()->id, 403);
+    }
+
+    private function validateAppointmentRequest(Request $request): array
+    {
+        return $request->validate([
+            'doctor_id' => ['required', 'integer', 'exists:users,id'],
+            'appointment_date' => ['required', 'date', 'after_or_equal:today'],
+            'appointment_time' => ['required', 'date_format:H:i'],
+            'symptoms' => ['nullable', 'string', 'max:2000'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+    }
+
+    private function findBookableDoctor(int $doctorId): User
+    {
+        return User::where('id', $doctorId)
+            ->whereHas('role', fn ($query) => $query->where('name', 'doctor'))
+            ->firstOrFail();
+    }
+
+    private function validateSlot(User $doctor, Carbon $date, string $time): ?string
+    {
+        $hasAvailability = DoctorAvailability::where('doctor_id', $doctor->id)
+            ->where('is_active', true)
+            ->where('day_of_week', $date->format('l'))
+            ->where('start_time', '<=', $time)
+            ->where('end_time', '>=', $time)
+            ->exists();
+
+        if (! $hasAvailability) {
+            return 'Please choose a time inside the selected doctor availability.';
+        }
+
+        $slotTaken = Appointment::where('doctor_id', $doctor->id)
+            ->whereDate('appointment_date', $date->toDateString())
+            ->where('appointment_time', $time)
+            ->whereIn('status', ['pending', 'approved'])
+            ->exists();
+
+        if ($slotTaken) {
+            return 'That appointment slot is already booked.';
+        }
+
+        return null;
+    }
+
+    private function doctorAppointmentFee(User $doctor): float
+    {
+        $fee = $doctor->doctorProfile?->consultation_fee;
+
+        return filled($fee) ? (float) $fee : $this->defaultAppointmentFee();
+    }
+
+    private function defaultAppointmentFee(): float
+    {
+        return (float) config('services.appointments.fee', 500);
+    }
+
+    private function disableProxyForRazorpay(): void
+    {
+        foreach (['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy'] as $name) {
+            putenv($name);
+            unset($_ENV[$name], $_SERVER[$name]);
+        }
     }
 }

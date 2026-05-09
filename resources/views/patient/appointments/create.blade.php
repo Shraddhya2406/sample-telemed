@@ -15,6 +15,9 @@
                 ->values()
                 ->all() ?? [],
             'booked' => $bookedSlots->get($doctor->id, collect())->toArray(),
+            'fee' => filled($doctor->doctorProfile?->consultation_fee)
+                ? (float) $doctor->doctorProfile->consultation_fee
+                : (float) $defaultAppointmentFee,
         ],
     ]);
 @endphp
@@ -22,13 +25,15 @@
 <div class="max-w-6xl mx-auto">
     <div class="bg-white p-6 rounded shadow mb-6">
         <h1 class="text-2xl font-bold">Book Appointment</h1>
-        <p class="text-gray-600">Choose a doctor and request a consultation slot.</p>
+        <p class="text-gray-600">Choose a doctor, select a consultation slot, and complete online payment.</p>
     </div>
 
     <form id="appointment_form" method="POST" action="{{ route('patient.appointments.store') }}" class="bg-white p-6 rounded shadow">
         @csrf
         <input type="hidden" name="appointment_date" id="appointment_date" value="{{ old('appointment_date') }}" required>
         <input type="hidden" name="appointment_time" id="appointment_time" value="{{ old('appointment_time') }}" required>
+
+        <div id="payment_message" class="hidden mb-4 px-4 py-3 rounded"></div>
 
         <div class="grid grid-cols-1 gap-4">
             <div>
@@ -67,10 +72,21 @@
                 <label class="block font-semibold mb-2">Notes</label>
                 <textarea name="notes" rows="3" class="w-full border rounded px-3 py-2" placeholder="Anything else the doctor should know">{{ old('notes') }}</textarea>
             </div>
+
+            <div class="border rounded p-4 bg-green-50 border-green-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                    <div class="font-semibold text-gray-900">Online Appointment Payment</div>
+                    <div class="text-sm text-gray-600">Your appointment request is created after payment is verified.</div>
+                </div>
+                <div id="appointment_fee_label" class="text-xl font-bold text-green-700">Rs. {{ number_format($defaultAppointmentFee, 2) }}</div>
+            </div>
         </div>
 
         <div class="mt-6 flex gap-3">
-            <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" type="submit">Send Request</button>
+            <button id="pay_book_button" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed" type="submit">
+                <svg id="payment_spinner" class="w-4 h-4 animate-spin hidden" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                <span id="payment_button_text">Pay & Book Appointment</span>
+            </button>
             <a href="{{ route('patient.appointments.index') }}" class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">Cancel</a>
         </div>
     </form>
@@ -114,8 +130,21 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const doctorSlots = @json($doctorSlots);
+        const razorpayCheckoutUrl = 'https://checkout.razorpay.com/v1/checkout.js';
+        const csrfToken = @json(csrf_token());
+        const keyId = @json(config('services.razorpay.key_id'));
+        const createPaymentOrderUrl = @json(route('patient.appointments.payment.order'));
+        const verifyPaymentUrl = @json(route('patient.appointments.payment.verify'));
+        const userName = @json(auth()->user()->name ?? '');
+        const userEmail = @json(auth()->user()->email ?? '');
+        const userContact = @json(auth()->user()->phone ?? '');
         const form = document.getElementById('appointment_form');
         const doctorSelect = document.getElementById('doctor_id');
+        const feeLabel = document.getElementById('appointment_fee_label');
+        const payButton = document.getElementById('pay_book_button');
+        const paymentSpinner = document.getElementById('payment_spinner');
+        const paymentButtonText = document.getElementById('payment_button_text');
+        const paymentMessage = document.getElementById('payment_message');
         const empty = document.getElementById('slot_empty');
         const slotError = document.getElementById('slot_error');
         const dateInput = document.getElementById('appointment_date');
@@ -139,8 +168,170 @@
         let activeDate = '';
         let pendingSlot = null;
 
+        function setPaymentLoading(isLoading, text) {
+            payButton.disabled = isLoading;
+            paymentSpinner.classList.toggle('hidden', !isLoading);
+            paymentButtonText.textContent = text || 'Pay & Book Appointment';
+        }
+
+        function showPaymentMessage(text, type) {
+            paymentMessage.textContent = text;
+            paymentMessage.className = 'mb-4 px-4 py-3 rounded ' + (
+                type === 'error'
+                    ? 'bg-red-50 border border-red-200 text-red-800'
+                    : 'bg-green-50 border border-green-200 text-green-800'
+            );
+        }
+
+        function loadRazorpayCheckout() {
+            if (window.Razorpay) {
+                return Promise.resolve();
+            }
+
+            const existingScript = document.querySelector('script[data-razorpay-checkout]');
+            if (existingScript) {
+                return new Promise((resolve, reject) => {
+                    existingScript.addEventListener('load', () => resolve(), { once: true });
+                    existingScript.addEventListener('error', () => reject(new Error('Unable to load Razorpay Checkout. Check your connection and try again.')), { once: true });
+                });
+            }
+
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = razorpayCheckoutUrl;
+                script.async = true;
+                script.dataset.razorpayCheckout = 'true';
+                script.onload = () => {
+                    if (window.Razorpay) {
+                        resolve();
+                        return;
+                    }
+
+                    reject(new Error('Razorpay Checkout did not initialize. Please refresh and try again.'));
+                };
+                script.onerror = () => reject(new Error('Unable to load Razorpay Checkout. Check your connection and try again.'));
+                document.head.appendChild(script);
+            });
+        }
+
+        async function postJson(url, payload) {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                const errors = data.errors ? Object.values(data.errors).flat().join(' ') : '';
+                throw new Error(errors || data.message || 'Payment request failed.');
+            }
+
+            return data;
+        }
+
+        function appointmentPayload() {
+            return {
+                doctor_id: doctorSelect.value,
+                appointment_date: dateInput.value,
+                appointment_time: timeInput.value,
+                symptoms: form.querySelector('[name="symptoms"]').value,
+                notes: form.querySelector('[name="notes"]').value,
+            };
+        }
+
+        async function startPayment() {
+            if (!keyId) {
+                showPaymentMessage('Payment gateway is not configured.', 'error');
+                return;
+            }
+
+            try {
+                setPaymentLoading(true, 'Loading checkout...');
+                await loadRazorpayCheckout();
+
+                setPaymentLoading(true, 'Creating payment...');
+                const order = await postJson(createPaymentOrderUrl, appointmentPayload());
+
+                const checkout = new Razorpay({
+                    key: keyId,
+                    amount: order.amount,
+                    currency: order.currency,
+                    name: @json(config('app.name')),
+                    description: 'Doctor appointment booking',
+                    order_id: order.order_id,
+                    prefill: {
+                        name: userName,
+                        email: userEmail,
+                        contact: userContact,
+                    },
+                    notes: {
+                        source: 'sample-telemed-appointment',
+                    },
+                    theme: {
+                        color: '#16a34a',
+                    },
+                    handler: async function (response) {
+                        try {
+                            setPaymentLoading(true, 'Verifying payment...');
+
+                            const verification = await postJson(verifyPaymentUrl, {
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature,
+                            });
+
+                            showPaymentMessage('Payment verified. Redirecting to your appointment...', 'success');
+                            window.location.href = verification.redirect_url;
+                        } catch (error) {
+                            setPaymentLoading(false);
+                            showPaymentMessage(error.message, 'error');
+                        }
+                    },
+                    modal: {
+                        ondismiss: function () {
+                            setPaymentLoading(false);
+                            showPaymentMessage('Payment was cancelled before booking the appointment.', 'error');
+                        },
+                    },
+                });
+
+                checkout.on('payment.failed', function (response) {
+                    setPaymentLoading(false);
+                    const error = response.error || {};
+                    showPaymentMessage(error.description || 'Payment failed. Please try again.', 'error');
+                    console.error('Appointment payment failed', response);
+                });
+
+                setPaymentLoading(false);
+                checkout.open();
+            } catch (error) {
+                setPaymentLoading(false);
+                showPaymentMessage(error.message, 'error');
+            }
+        }
+
         function pad(value) {
             return String(value).padStart(2, '0');
+        }
+
+        function formatCurrency(amount) {
+            return 'Rs. ' + Number(amount || 0).toFixed(2);
+        }
+
+        function selectedDoctorFee() {
+            const config = doctorSlots[doctorSelect.value];
+            return config ? config.fee : @json((float) $defaultAppointmentFee);
+        }
+
+        function refreshFeeLabel() {
+            feeLabel.textContent = formatCurrency(selectedDoctorFee());
         }
 
         function formatDate(date) {
@@ -323,6 +514,7 @@
                 slotHint.textContent = 'Select a doctor first, then choose a date and time.';
                 empty.textContent = 'Select a doctor to view available slots.';
                 empty.classList.remove('hidden');
+                refreshFeeLabel();
                 resetSelectedSlot();
                 return;
             }
@@ -332,6 +524,7 @@
                 slotHint.textContent = 'No available slots found for this doctor.';
                 empty.textContent = 'No available slots found for this doctor.';
                 empty.classList.remove('hidden');
+                refreshFeeLabel();
                 resetSelectedSlot();
                 return;
             }
@@ -339,6 +532,7 @@
             openModalButton.disabled = false;
             slotHint.textContent = `${availableDays.length} upcoming date${availableDays.length === 1 ? '' : 's'} available.`;
             activeDate = availableDays.find((day) => day.isoDate === dateInput.value)?.isoDate || availableDays[0].isoDate;
+            refreshFeeLabel();
             renderDatePicker();
         }
 
@@ -365,6 +559,8 @@
         });
 
         form.addEventListener('submit', function (event) {
+            event.preventDefault();
+
             const selectedDay = availableDays.find((day) => day.isoDate === dateInput.value);
             const validDateFormat = /^\d{4}-\d{2}-\d{2}$/.test(dateInput.value);
             const validTimeFormat = /^\d{2}:\d{2}$/.test(timeInput.value);
@@ -372,40 +568,38 @@
             clearSlotError();
 
             if (!doctorSelect.value) {
-                event.preventDefault();
                 showSlotError('Please select a doctor first.');
                 doctorSelect.focus();
                 return;
             }
 
             if (!dateInput.value || !timeInput.value) {
-                event.preventDefault();
                 showSlotError('Please choose an appointment date and time slot.');
                 openModal();
                 return;
             }
 
             if (!validDateFormat || !validTimeFormat) {
-                event.preventDefault();
                 showSlotError('Please choose a valid appointment date and time slot.');
                 openModal();
                 return;
             }
 
             if (dateInput.value < todayDate()) {
-                event.preventDefault();
                 showSlotError('Appointment date cannot be in the past.');
                 openModal();
                 return;
             }
 
             if (!selectedDay || !selectedDay.times.includes(timeInput.value)) {
-                event.preventDefault();
                 showSlotError('Selected appointment slot is no longer available. Please choose another slot.');
                 resetSelectedSlot();
                 refreshSlotState();
                 openModal();
+                return;
             }
+
+            startPayment();
         });
 
         openModalButton.addEventListener('click', openModal);

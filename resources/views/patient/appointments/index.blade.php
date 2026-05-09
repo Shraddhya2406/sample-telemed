@@ -37,6 +37,7 @@
                         <th class="p-4">Date</th>
                         <th class="p-4">Time</th>
                         <th class="p-4">Status</th>
+                        <th class="p-4">Payment</th>
                         <th class="p-4">Prescription</th>
                         <th class="p-4"></th>
                     </tr>
@@ -56,6 +57,12 @@
                                 </span>
                             </td>
                             <td class="p-4">
+                                <div class="font-semibold">Rs. {{ number_format((float) $appointment->consultation_fee, 2) }}</div>
+                                <div class="text-sm {{ $appointment->payment_status === 'paid' ? 'text-green-700' : 'text-gray-500' }}">
+                                    {{ ucfirst($appointment->payment_status ?? 'unpaid') }}
+                                </div>
+                            </td>
+                            <td class="p-4">
                                 @if($appointment->prescription)
                                     <div class="flex flex-wrap gap-3">
                                         <a href="{{ route('patient.prescriptions.show', $appointment->prescription) }}" class="text-indigo-600 hover:underline">View</a>
@@ -71,7 +78,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="p-6 text-center text-gray-600">No appointments yet.</td>
+                            <td colspan="7" class="p-6 text-center text-gray-600">No appointments yet.</td>
                         </tr>
                     @endforelse
                 </tbody>

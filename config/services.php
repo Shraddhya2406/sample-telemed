@@ -40,4 +40,8 @@ return [
         'key_secret' => env('RAZORPAY_KEY_SECRET'),
     ],
 
+    'appointments' => [
+        'fee' => env('APPOINTMENT_FEE', 500),
+    ],
+
 ];
