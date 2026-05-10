@@ -122,7 +122,7 @@
     <section class="py-20 bg-gradient-to-br from-blue-50 via-teal-50 to-green-50">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4 mt-4">
-                How It Works
+                How It Works!
             </h2>
             <div class="max-w-4xl mx-auto">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -161,12 +161,6 @@
     <footer class="bg-gray-900 text-gray-300 py-12">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="max-w-4xl mx-auto text-center">
-                <div class="mb-6">
-                    <div class="flex items-center justify-center space-x-2 mb-4 mt-4 bg-amber-200">
-                        <x-logo size="32" :showText="false" class="block text-blue-400" />
-                        <span class="text-xl font-bold text-white">{{ config('app.name', 'Sample Telemed') }}</span>
-                    </div>
-                </div>
                 <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg mb-6 max-w-2xl mx-auto">
                     <p class="text-yellow-800 text-sm">
                         <strong>⚠️ Disclaimer:</strong> This platform provides medicine recommendations, not medical diagnoses. 
