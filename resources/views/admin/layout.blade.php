@@ -54,7 +54,6 @@
                     </div>
 
                     <div class="d-grid gap-2 mt-3">
-                        <a href="{{ route('dashboard.patient') }}" class="btn btn-outline-light rounded-pill">Patient Area</a>
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
                             <button type="submit" class="btn btn-danger w-100 rounded-pill">Logout</button>
