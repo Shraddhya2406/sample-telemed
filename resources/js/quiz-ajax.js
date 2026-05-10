@@ -116,15 +116,15 @@ const QuizManager = {
 
         options.forEach(option => {
             const optionHTML = `
-                <label class="flex items-center p-3 border border-gray-200 rounded cursor-pointer hover:bg-blue-50 transition">
+                <label class="group flex cursor-pointer items-center rounded-lg border border-slate-200 bg-white p-4 transition hover:border-blue-300 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
                     <input 
                         type="radio" 
                         name="health_option_id" 
                         value="${option.id}" 
-                        class="form-radio text-blue-600 w-4 h-4"
+                        class="h-4 w-4 text-blue-600"
                         onchange="QuizManager.enableNextButton()"
                     >
-                    <span class="ml-3 text-gray-700">${option.text}</span>
+                    <span class="ml-3 text-base font-semibold text-slate-700 group-hover:text-blue-800 dark:text-slate-200 dark:group-hover:text-blue-200">${option.text}</span>
                 </label>
             `;
             optionsContainer.innerHTML += optionHTML;
@@ -230,56 +230,59 @@ const QuizManager = {
     renderResult(data) {
         const resultContainer = document.getElementById('quiz-result');
         const dashboardUrl = document.getElementById('quiz-container')?.dataset.dashboardUrl || '/dashboard/patient';
+        const appointmentUrl = document.getElementById('quiz-container')?.dataset.appointmentUrl || '/patient/appointments/create';
         // resolve store URL from data attribute or build it from apiBase
         const storeUrl = document.getElementById('quiz-container')?.dataset.storeUrl || this.buildUrl('/patient/medicines');
         
         const resultHTML = `
             <div class="text-center">
                 <div class="mb-8">
-                    <svg class="w-16 h-16 mx-auto text-green-600 mb-4" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="mx-auto mb-4 h-16 w-16 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                     </svg>
-                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Diagnosis Complete!</h2>
+                    <h2 class="mb-3 text-3xl font-bold text-slate-950 dark:text-white">Assessment Complete</h2>
+                    <p class="mx-auto max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">Here is a simple recommendation based on your answers. A doctor can confirm what is right for you.</p>
                 </div>
 
-                <div class="bg-blue-50 p-6 rounded mb-6">
+                <div class="mb-6 rounded-lg border border-blue-100 bg-blue-50 p-6 text-left dark:border-blue-900 dark:bg-blue-950/40">
 
-                    <div class="text-left">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Recommendation</h3>
+                    <div>
+                        <h3 class="mb-4 text-xl font-bold text-slate-950 dark:text-white">Care Recommendation</h3>
                         
-                        <div class="mb-4">
-                            <p class="text-gray-600 text-sm">Disease Category</p>
-                            <p class="text-lg font-semibold text-gray-800">${this.escapeHtml(data.recommendation?.disease_name || 'N/A')}</p>
+                        <div class="mb-4 rounded-lg bg-white p-4 dark:bg-slate-900">
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Possible concern</p>
+                            <p class="mt-1 text-lg font-bold text-slate-950 dark:text-white">${this.escapeHtml(data.recommendation?.disease_name || 'General wellness support')}</p>
                         </div>
 
-                        <div class="mb-4">
-                            <p class="text-gray-600 text-sm">Recommended Medicine</p>
-                            <p class="text-lg font-semibold text-gray-800">${this.escapeHtml(data.recommendation?.medicine_name || 'N/A')}</p>
+                        <div class="mb-4 rounded-lg bg-white p-4 dark:bg-slate-900">
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Suggested medicine</p>
+                            <p class="mt-1 text-lg font-bold text-slate-950 dark:text-white">${this.escapeHtml(data.recommendation?.medicine_name || 'Please consult a doctor')}</p>
                         </div>
 
-                        <div>
-                            <p class="text-gray-600 text-sm">Advice</p>
-                            <p class="text-gray-800">${this.escapeHtml(data.recommendation?.advice || 'N/A')}</p>
+                        <div class="rounded-lg bg-white p-4 dark:bg-slate-900">
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">What to do next</p>
+                            <p class="mt-1 leading-6 text-slate-700 dark:text-slate-200">${this.escapeHtml(data.recommendation?.advice || 'Rest, stay hydrated, and consult a doctor if symptoms continue.')}</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded mb-6">
-                    <p class="text-yellow-800 text-sm">
-                        <strong>⚠️ Important:</strong> This is not a medical diagnosis. Please consult a doctor for proper treatment.
+                <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-left dark:border-amber-900 dark:bg-amber-950/40">
+                    <p class="text-sm leading-6 text-amber-800 dark:text-amber-200">
+                        Important: This is not a medical diagnosis. Please consult a doctor for proper treatment.
                     </p>
                 </div>
 
-                <div class="flex gap-4 justify-center">
-                    <a href="${dashboardUrl}" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
-                        Go to Dashboard
+                <div class="flex flex-col gap-3 sm:flex-row sm:justify-center">
+                    <a href="${storeUrl}" class="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700">
+                        Buy Medicines
                     </a>
-                    <button onclick="location.reload()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-                        Retake Diagnosis
+                    <a href="${appointmentUrl}" class="rounded-lg bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">
+                        Book Doctor
+                    </a>
+                    <button onclick="location.reload()" class="rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                        Retake Quiz
                     </button>
-                    <a href="${storeUrl}" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
-                        Visit Store
-                    </a>
+                    <a href="${dashboardUrl}" class="rounded-lg px-6 py-3 text-sm font-bold text-slate-600 transition hover:text-blue-700 dark:text-slate-300">Dashboard</a>
                 </div>
             </div>
         `;

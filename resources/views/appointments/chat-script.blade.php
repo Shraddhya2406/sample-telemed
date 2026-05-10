@@ -63,6 +63,25 @@
         overflow-wrap: anywhere;
         line-height: 1.45;
     }
+
+    .dark [data-chat-messages] {
+        background: #020617;
+        border-color: #1e293b;
+    }
+
+    .dark .chat-bubble {
+        border-color: #334155;
+        box-shadow: none;
+    }
+
+    .dark .chat-message-other .chat-bubble {
+        color: #e2e8f0;
+        background: #0f172a;
+    }
+
+    .dark .chat-message-other .chat-meta {
+        color: #94a3b8;
+    }
 </style>
 
 <script>

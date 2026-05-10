@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.patient')
 
 @section('title', 'Book Appointment')
 
@@ -23,12 +23,12 @@
 @endphp
 
 <div class="max-w-6xl mx-auto">
-    <div class="bg-white p-6 rounded shadow mb-6">
-        <h1 class="text-2xl font-bold">Book Appointment</h1>
-        <p class="text-gray-600">Choose a doctor, select a consultation slot, and complete online payment.</p>
+    <div class="bg-white p-6 rounded shadow mb-6 dark:bg-slate-900 dark:border dark:border-slate-800">
+        <h1 class="text-2xl font-bold text-slate-950 dark:text-white">Book Appointment</h1>
+        <p class="text-gray-600 dark:text-slate-300">Choose a doctor, select a consultation slot, and complete online payment.</p>
     </div>
 
-    <form id="appointment_form" method="POST" action="{{ route('patient.appointments.store') }}" class="bg-white p-6 rounded shadow">
+    <form id="appointment_form" method="POST" action="{{ route('patient.appointments.store') }}" class="bg-white p-6 rounded shadow dark:bg-slate-900 dark:border dark:border-slate-800">
         @csrf
         <input type="hidden" name="appointment_date" id="appointment_date" value="{{ old('appointment_date') }}" required>
         <input type="hidden" name="appointment_time" id="appointment_time" value="{{ old('appointment_time') }}" required>
@@ -37,8 +37,8 @@
 
         <div class="grid grid-cols-1 gap-4">
             <div>
-                <label class="block font-semibold mb-2">Doctor</label>
-                <select name="doctor_id" id="doctor_id" class="w-full border rounded px-3 py-2" required>
+                <label class="block font-semibold mb-2 text-slate-950 dark:text-white">Doctor</label>
+                <select name="doctor_id" id="doctor_id" class="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100" required>
                     <option value="">Select doctor</option>
                     @foreach($doctors as $doctor)
                         <option value="{{ $doctor->id }}" @selected(old('doctor_id') == $doctor->id)>
@@ -49,34 +49,34 @@
             </div>
 
             <div>
-                <label class="block font-semibold mb-2">Appointment Slot</label>
-                <div class="border rounded p-4 bg-gray-50 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <label class="block font-semibold mb-2 text-slate-950 dark:text-white">Appointment Slot</label>
+                <div class="border rounded p-4 bg-gray-50 flex flex-col md:flex-row md:items-center md:justify-between gap-3 dark:bg-slate-950 dark:border-slate-800">
                     <div>
-                        <div id="selected_slot_label" class="font-semibold text-gray-900">No slot selected</div>
-                        <div id="slot_hint" class="text-sm text-gray-600">Select a doctor first, then choose a date and time.</div>
+                        <div id="selected_slot_label" class="font-semibold text-gray-900 dark:text-white">No slot selected</div>
+                        <div id="slot_hint" class="text-sm text-gray-600 dark:text-slate-400">Select a doctor first, then choose a date and time.</div>
                     </div>
                     <button id="open_slot_modal" type="button" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600" disabled>
                         Choose Slot
                     </button>
                 </div>
-                <div id="slot_empty" class="hidden mt-3 border rounded p-4 text-gray-600 bg-gray-50"></div>
-                <div id="slot_error" class="hidden mt-3 border border-red-200 rounded p-3 text-red-700 bg-red-50 text-sm"></div>
+                <div id="slot_empty" class="hidden mt-3 border rounded p-4 text-gray-600 bg-gray-50 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400"></div>
+                <div id="slot_error" class="hidden mt-3 border border-red-200 rounded p-3 text-red-700 bg-red-50 text-sm dark:border-red-900 dark:bg-red-950 dark:text-red-200"></div>
             </div>
 
             <div>
-                <label class="block font-semibold mb-2">Symptoms</label>
-                <textarea name="symptoms" rows="4" class="w-full border rounded px-3 py-2" placeholder="Describe symptoms, duration, and severity">{{ old('symptoms') }}</textarea>
+                <label class="block font-semibold mb-2 text-slate-950 dark:text-white">Symptoms</label>
+                <textarea name="symptoms" rows="4" class="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100" placeholder="Describe symptoms, duration, and severity">{{ old('symptoms') }}</textarea>
             </div>
 
             <div>
-                <label class="block font-semibold mb-2">Notes</label>
-                <textarea name="notes" rows="3" class="w-full border rounded px-3 py-2" placeholder="Anything else the doctor should know">{{ old('notes') }}</textarea>
+                <label class="block font-semibold mb-2 text-slate-950 dark:text-white">Notes</label>
+                <textarea name="notes" rows="3" class="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100" placeholder="Anything else the doctor should know">{{ old('notes') }}</textarea>
             </div>
 
-            <div class="border rounded p-4 bg-green-50 border-green-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div class="border rounded p-4 bg-green-50 border-green-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3 dark:bg-green-950/40 dark:border-green-900">
                 <div>
-                    <div class="font-semibold text-gray-900">Online Appointment Payment</div>
-                    <div class="text-sm text-gray-600">Your appointment request is created after payment is verified.</div>
+                    <div class="font-semibold text-gray-900 dark:text-green-100">Online Appointment Payment</div>
+                    <div class="text-sm text-gray-600 dark:text-green-300">Your appointment request is created after payment is verified.</div>
                 </div>
                 <div id="appointment_fee_label" class="text-xl font-bold text-green-700">Rs. {{ number_format($defaultAppointmentFee, 2) }}</div>
             </div>
@@ -87,7 +87,7 @@
                 <svg id="payment_spinner" class="w-4 h-4 animate-spin hidden" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
                 <span id="payment_button_text">Pay & Book Appointment</span>
             </button>
-            <a href="{{ route('patient.appointments.index') }}" class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">Cancel</a>
+            <a href="{{ route('patient.appointments.index') }}" class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">Cancel</a>
         </div>
     </form>
 </div>
@@ -95,30 +95,30 @@
 <div id="slot_modal" class="fixed inset-0 z-50 hidden">
     <div id="slot_modal_backdrop" class="absolute inset-0 bg-black bg-opacity-50"></div>
     <div class="relative min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white rounded shadow-xl w-full max-w-xl overflow-hidden p-4">
-            <div class="px-5 py-4 border-b flex items-center justify-between gap-3">
+        <div class="bg-white rounded shadow-xl w-full max-w-xl overflow-hidden p-4 dark:bg-slate-900 dark:border dark:border-slate-800">
+            <div class="px-5 py-4 border-b flex items-center justify-between gap-3 dark:border-slate-800">
                 <div>
-                    <h2 class="text-lg font-bold">Choose Appointment Slot</h2>
-                    <p id="slot_modal_subtitle" class="text-sm text-gray-600">Pick a date and time.</p>
+                    <h2 class="text-lg font-bold text-slate-950 dark:text-white">Choose Appointment Slot</h2>
+                    <p id="slot_modal_subtitle" class="text-sm text-gray-600 dark:text-slate-400">Pick a date and time.</p>
                 </div>
-                <button id="close_slot_modal" type="button" class="text-gray-500 hover:text-gray-800 text-2xl leading-none" aria-label="Close slot picker">&times;</button>
+                <button id="close_slot_modal" type="button" class="text-gray-500 hover:text-gray-800 text-2xl leading-none dark:text-slate-400 dark:hover:text-white" aria-label="Close slot picker">&times;</button>
             </div>
 
             <div class="p-5 space-y-5">
                 <div>
-                    <div class="font-semibold mb-2">Available Dates</div>
+                    <div class="font-semibold mb-2 text-slate-950 dark:text-white">Available Dates</div>
                     <div id="slot_dates" class="flex gap-2 overflow-x-auto pb-1"></div>
                 </div>
 
                 <div>
-                    <div id="selected_date_label" class="font-semibold mb-2 text-sm text-gray-700">Time Slots</div>
+                    <div id="selected_date_label" class="font-semibold mb-2 text-sm text-gray-700 dark:text-slate-300">Time Slots</div>
                     <div id="slot_times" class="flex flex-wrap gap-2"></div>
-                    <div id="slot_time_empty" class="hidden border rounded p-4 text-gray-600 bg-gray-50"></div>
+                    <div id="slot_time_empty" class="hidden border rounded p-4 text-gray-600 bg-gray-50 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400"></div>
                 </div>
             </div>
 
-            <div class="px-5 py-4 border-t bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div id="modal_selected_label" class="text-sm text-gray-600">No slot selected</div>
+            <div class="px-5 py-4 border-t bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 dark:bg-slate-950 dark:border-slate-800">
+                <div id="modal_selected_label" class="text-sm text-gray-600 dark:text-slate-400">No slot selected</div>
                 <button id="confirm_slot" type="button" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600" disabled>
                     Confirm Slot
                 </button>
@@ -458,7 +458,7 @@
                 button.dataset.slotButton = 'true';
                 button.className = day.isoDate === dateInput.value && time === timeInput.value
                     ? 'border rounded-full px-4 py-2 text-sm bg-green-600 text-white border-green-600'
-                    : 'border rounded-full px-4 py-2 text-sm bg-white hover:bg-green-50 hover:border-green-500';
+                    : 'border rounded-full px-4 py-2 text-sm bg-white hover:bg-green-50 hover:border-green-500 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-green-950 dark:hover:border-green-700';
                 button.textContent = time;
                 button.addEventListener('click', () => {
                     pendingSlot = { date: day.isoDate, time };
@@ -466,7 +466,7 @@
                     confirmButton.disabled = false;
 
                     timeList.querySelectorAll('[data-slot-button]').forEach((slotButton) => {
-                        slotButton.className = 'border rounded-full px-4 py-2 text-sm bg-white hover:bg-green-50 hover:border-green-500';
+                        slotButton.className = 'border rounded-full px-4 py-2 text-sm bg-white hover:bg-green-50 hover:border-green-500 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-green-950 dark:hover:border-green-700';
                     });
 
                     button.className = 'border rounded-full px-4 py-2 text-sm bg-green-600 text-white border-green-600';
@@ -486,7 +486,7 @@
                 button.dataset.dateButton = 'true';
                 button.className = day.isoDate === activeDate
                     ? 'border rounded-full px-4 py-2 text-sm whitespace-nowrap bg-green-600 text-white border-green-600'
-                    : 'border rounded-full px-4 py-2 text-sm whitespace-nowrap bg-white hover:bg-green-50 hover:border-green-500';
+                    : 'border rounded-full px-4 py-2 text-sm whitespace-nowrap bg-white hover:bg-green-50 hover:border-green-500 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-green-950 dark:hover:border-green-700';
                 button.textContent = chipDate(day.date);
                 button.addEventListener('click', () => {
                     activeDate = day.isoDate;
