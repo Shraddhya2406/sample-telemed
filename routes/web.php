@@ -50,11 +50,15 @@ Route::middleware(['auth', 'is_admin'])->prefix('admin')->name('admin.')->group(
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::redirect('/dashboard/admin', '/admin/dashboard')->name('dashboard.admin');
+    Route::get('/dashboard/admin',  function () {
+        return redirect()->route('admin.dashboard');
+    })->name('dashboard.admin');
 });
 
 Route::middleware(['auth', 'role:doctor'])->group(function () {
-    Route::redirect('/dashboard/doctor', '/doctor/dashboard')->name('dashboard.doctor');
+    Route::get('/dashboard/doctor',  function () {
+        return redirect()->route('doctor.dashboard');
+    })->name('dashboard.doctor');
 });
 
 Route::middleware(['auth', 'is_doctor'])->prefix('doctor')->name('doctor.')->group(function () {
