@@ -65,7 +65,6 @@
                         <div class="text-uppercase small text-secondary fw-semibold">@yield('kicker', 'Clinical Workspace')</div>
                         <h1 class="h3 mb-0">@yield('page-title', 'Doctor Panel')</h1>
                     </div>
-                    <a href="{{ route('doctor.prescriptions.create') }}" class="btn btn-success align-self-start"><i class="bi bi-plus-circle me-1"></i> Prescription</a>
                 </div>
             </header>
 
