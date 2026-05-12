@@ -2,6 +2,11 @@
     $currentUser = auth()->user();
     $currentRole = $currentUser?->role?->name;
     $layout = $currentRole === 'doctor' ? 'doctor.layout' : 'layouts.patient';
+    $appointmentRedirectUrl = $videoCall->appointment
+        ? ($currentRole === 'doctor'
+            ? route('doctor.appointments.show', $videoCall->appointment)
+            : route('patient.appointments.show', $videoCall->appointment))
+        : ($currentRole === 'doctor' ? route('doctor.appointments.index') : route('patient.appointments.index'));
 @endphp
 
 @extends($layout)
@@ -14,17 +19,19 @@
     data-is-caller="{{ $isCaller ? '1' : '0' }}"
     data-status="{{ $videoCall->status }}"
     data-current-user-id="{{ $currentUser->id }}"
-    data-signal-url="{{ route('call.signal') }}"
-    data-accept-url="{{ route('call.accept') }}"
-    data-reject-url="{{ route('call.reject') }}"
-    data-end-url="{{ route('call.end') }}"
+    data-signal-url="{{ url('/call/signal') }}"
+    data-accept-url="{{ url('/call/accept') }}"
+    data-reject-url="{{ url('/call/reject') }}"
+    data-end-url="{{ url('/call/end') }}"
+    data-redirect-url="{{ $appointmentRedirectUrl }}"
+    data-ice-servers='@json(config('services.webrtc.ice_servers'))'
 >
     <div class="telemed-room-header">
         <div>
             <p class="telemed-room-kicker">Secure one-to-one consultation</p>
             <h2 class="telemed-room-title">{{ $isCaller ? 'Calling' : 'Consulting with' }} {{ $otherUser?->role?->name === 'doctor' ? 'Dr. ' : '' }}{{ $otherUser?->name }}</h2>
             <p class="telemed-room-meta">
-                {{ ucfirst($currentRole ?? 'user') }} to {{ ucfirst($otherUser?->role?->name ?? 'user') }} ·
+                {{ ucfirst($currentRole ?? 'user') }} to {{ ucfirst($otherUser?->role?->name ?? 'user') }} &middot;
                 <span data-call-status>{{ ucfirst($videoCall->status) }}</span>
             </p>
         </div>
@@ -42,12 +49,12 @@
     <div class="telemed-video-grid">
         <section class="telemed-video-stage telemed-video-remote">
             <video data-remote-video autoplay playsinline></video>
-            <div class="telemed-video-label">{{ $otherUser?->name }} · {{ ucfirst($otherUser?->role?->name ?? 'User') }}</div>
+            <div class="telemed-video-label">{{ $otherUser?->name }} &middot; {{ ucfirst($otherUser?->role?->name ?? 'User') }}</div>
             <div class="telemed-video-placeholder" data-remote-placeholder>Waiting for remote video</div>
         </section>
         <section class="telemed-video-stage telemed-video-local">
             <video data-local-video autoplay muted playsinline></video>
-            <div class="telemed-video-label">You · {{ ucfirst($currentRole ?? 'User') }}</div>
+            <div class="telemed-video-label">You &middot; {{ ucfirst($currentRole ?? 'User') }}</div>
             <div class="telemed-video-placeholder" data-local-placeholder>Camera is off</div>
         </section>
     </div>
@@ -224,7 +231,10 @@
             remoteDescriptionReady: false,
             pendingCandidates: [],
             offerStarted: false,
+            readySent: false,
+            remoteReady: false,
         };
+        const iceServers = JSON.parse(room.dataset.iceServers || '[]');
 
         const localVideo = room.querySelector('[data-local-video]');
         const remoteVideo = room.querySelector('[data-remote-video]');
@@ -237,6 +247,13 @@
         const endButton = room.querySelector('[data-end-call]');
         const acceptButton = room.querySelector('[data-accept-call]');
         const rejectButton = room.querySelector('[data-reject-call]');
+
+        console.info('[VideoCall] room boot', {
+            callId: state.callId,
+            isCaller: state.isCaller,
+            status: state.status,
+            userId: window.telemedCallConfig?.userId,
+        });
 
         function setMessage(text, isError) {
             messageEl.textContent = text;
@@ -268,34 +285,75 @@
         }
 
         function sendSignal(type, payload) {
+            console.info('[VideoCall] send', type);
             return post(room.dataset.signalUrl, {
                 video_call_id: state.callId,
                 type: type,
                 payload: payload,
+            }).then(function (data) {
+                console.info('[VideoCall] sent', type, data.message || 'ok');
+                return data;
             }).catch(function (error) {
                 console.warn('Signal failed:', error.message);
+                setMessage('Signal failed: ' + error.message, true);
             });
+        }
+
+        function encodeDescription(description) {
+            return {
+                type: description.type,
+                sdp_base64: btoa(description.sdp || ''),
+            };
+        }
+
+        function decodeDescription(description) {
+            if (!description) {
+                throw new Error('Missing session description.');
+            }
+
+            const sdp = description.sdp_base64
+                ? atob(description.sdp_base64)
+                : String(description.sdp || '');
+
+            return {
+                type: description.type,
+                sdp: sdp.replace(/\r?\n/g, '\r\n'),
+            };
         }
 
         function ensurePeer() {
             if (state.peer) return state.peer;
 
-            state.peer = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-            });
+            state.peer = new RTCPeerConnection({ iceServers: iceServers });
 
             state.peer.onicecandidate = function (event) {
-                if (event.candidate) sendSignal('ice-candidate', { candidate: event.candidate });
+                if (event.candidate) {
+                    console.info('[VideoCall] local ICE candidate', event.candidate.type || event.candidate.candidate);
+                    sendSignal('ice-candidate', { candidate: event.candidate });
+                }
             };
 
             state.peer.ontrack = function (event) {
+                console.info('[VideoCall] remote track received', event.track?.kind);
                 if (remoteVideo.srcObject !== event.streams[0]) {
                     remoteVideo.srcObject = event.streams[0];
                     remoteStage.classList.add('has-stream');
+                    remoteVideo.play().catch(function () {});
+                }
+            };
+
+            state.peer.oniceconnectionstatechange = function () {
+                console.info('[VideoCall] ICE state', state.peer.iceConnectionState);
+                if (state.peer.iceConnectionState === 'connected' || state.peer.iceConnectionState === 'completed') {
+                    setMessage('Media connection established.');
+                }
+                if (state.peer.iceConnectionState === 'failed') {
+                    setMessage('Media connection failed. Configure a TURN server for this network.', true);
                 }
             };
 
             state.peer.onconnectionstatechange = function () {
+                console.info('[VideoCall] peer state', state.peer.connectionState);
                 if (['failed', 'disconnected'].includes(state.peer.connectionState)) {
                     setMessage('The video connection was interrupted.', true);
                 }
@@ -318,6 +376,7 @@
                     state.localStream = stream;
                     localVideo.srcObject = stream;
                     localStage.classList.add('has-stream');
+                    localVideo.play().catch(function () {});
                     micButton.disabled = false;
                     startButton.disabled = true;
                     ensurePeer();
@@ -331,20 +390,27 @@
         }
 
         function maybeStartOffer() {
-            if (!state.isCaller || state.offerStarted || state.status !== 'accepted') return;
+            if (!state.isCaller || state.offerStarted || state.status !== 'accepted' || !state.remoteReady) return;
             state.offerStarted = true;
             startMedia()
                 .then(function () {
                     const peer = ensurePeer();
                     return peer.createOffer()
                         .then(function (offer) { return peer.setLocalDescription(offer); })
-                        .then(function () { return sendSignal('offer', { description: peer.localDescription }); });
+                        .then(function () { return sendSignal('offer', { description: encodeDescription(peer.localDescription) }); });
                 })
                 .then(function () { setMessage('Calling. Waiting for remote video.'); })
                 .catch(function (error) {
                     state.offerStarted = false;
                     setMessage(error.message || 'Could not start the call.', true);
                 });
+        }
+
+        function announceReady() {
+            if (state.isCaller || state.readySent || state.status !== 'accepted') return;
+            state.readySent = true;
+            sendSignal('call-ready', {});
+            setMessage('Ready. Waiting for the doctor video.');
         }
 
         function flushCandidates() {
@@ -361,21 +427,21 @@
             startMedia()
                 .then(function () {
                     const peer = ensurePeer();
-                    return peer.setRemoteDescription(new RTCSessionDescription(description))
+                    return peer.setRemoteDescription(decodeDescription(description))
                         .then(function () {
                             state.remoteDescriptionReady = true;
                             flushCandidates();
                             return peer.createAnswer();
                         })
                         .then(function (answer) { return peer.setLocalDescription(answer); })
-                        .then(function () { return sendSignal('answer', { description: peer.localDescription }); });
+                        .then(function () { return sendSignal('answer', { description: encodeDescription(peer.localDescription) }); });
                 })
                 .then(function () { setMessage('Connected.'); })
                 .catch(function (error) { setMessage(error.message || 'Could not answer the call.', true); });
         }
 
         function handleAnswer(description) {
-            ensurePeer().setRemoteDescription(new RTCSessionDescription(description))
+            ensurePeer().setRemoteDescription(decodeDescription(description))
                 .then(function () {
                     state.remoteDescriptionReady = true;
                     flushCandidates();
@@ -406,8 +472,19 @@
             remoteStage.classList.remove('has-stream');
         }
 
+        function redirectToAppointments() {
+            window.setTimeout(function () {
+                window.location.href = room.dataset.redirectUrl;
+            }, 700);
+        }
+
         startButton?.addEventListener('click', function () {
-            startMedia().then(maybeStartOffer).catch(function () {});
+            startMedia()
+                .then(function () {
+                    announceReady();
+                    maybeStartOffer();
+                })
+                .catch(function () {});
         });
 
         micButton?.addEventListener('click', function () {
@@ -426,6 +503,7 @@
                     rejectButton?.remove();
                     return startMedia();
                 })
+                .then(function () { announceReady(); })
                 .catch(function (error) { setMessage(error.message, true); })
                 .finally(function () { acceptButton.disabled = false; });
         });
@@ -449,6 +527,7 @@
                     setStatus('ended');
                     cleanup();
                     setMessage('Call ended.');
+                    redirectToAppointments();
                 })
                 .catch(function (error) { setMessage(error.message, true); })
                 .finally(function () { endButton.disabled = false; });
@@ -456,13 +535,22 @@
 
         window.ensureTelemedEcho()
             .then(function (echo) {
+                console.info('[VideoCall] Echo ready. Subscribing to users.' + window.telemedCallConfig.userId);
                 echo.private('users.' + window.telemedCallConfig.userId)
+                    .subscribed(function () {
+                        console.info('[VideoCall] subscribed users.' + window.telemedCallConfig.userId);
+                    })
+                    .error(function (error) {
+                        console.warn('[VideoCall] subscription error', error);
+                        setMessage('Could not subscribe to private call channel. Check /broadcasting/auth.', true);
+                    })
                     .listen('.video-call.signal', function (event) {
                         if (Number(event.video_call_id) !== state.callId) return;
+                        console.info('[VideoCall] receive', event.type);
 
                         if (event.type === 'call-accepted') {
                             setStatus('accepted');
-                            maybeStartOffer();
+                            setMessage('Call accepted. Waiting for the patient to join the video room.');
                         } else if (event.type === 'call-rejected') {
                             setStatus('rejected');
                             cleanup();
@@ -471,6 +559,10 @@
                             setStatus('ended');
                             cleanup();
                             setMessage('The other participant ended the call.');
+                            redirectToAppointments();
+                        } else if (event.type === 'call-ready') {
+                            state.remoteReady = true;
+                            maybeStartOffer();
                         } else if (event.type === 'offer') {
                             handleOffer(event.payload.description);
                         } else if (event.type === 'answer') {
@@ -480,9 +572,12 @@
                         }
                     });
 
-                if (state.status === 'accepted') maybeStartOffer();
+                if (state.status === 'accepted' && !state.isCaller) {
+                    startMedia().then(function () { announceReady(); }).catch(function () {});
+                }
             })
             .catch(function (error) {
+                console.warn('[VideoCall] Echo failed', error);
                 setMessage('Real-time signaling is offline: ' + error.message, true);
             });
     })();

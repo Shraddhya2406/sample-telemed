@@ -13,6 +13,7 @@ class VideoCall extends Model
     protected $fillable = [
         'caller_id',
         'receiver_id',
+        'appointment_id',
         'status',
         'started_at',
         'ended_at',
@@ -31,6 +32,11 @@ class VideoCall extends Model
     public function receiver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'receiver_id');
+    }
+
+    public function appointment(): BelongsTo
+    {
+        return $this->belongsTo(Appointment::class);
     }
 
     public function hasParticipant(User $user): bool

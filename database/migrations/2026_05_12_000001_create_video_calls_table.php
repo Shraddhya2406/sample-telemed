@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('caller_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('receiver_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('appointment_id')->nullable()->constrained('appointments')->nullOnDelete();
             $table->string('status')->default('initiated');
             $table->timestamp('started_at')->nullable();
             $table->timestamp('ended_at')->nullable();

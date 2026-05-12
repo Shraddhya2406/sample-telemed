@@ -19,13 +19,14 @@ class VideoCallController extends Controller
 
         abort_unless($doctor->role?->name === 'doctor', 403);
         abort_unless($patient->role?->name === 'patient', 403);
-        $this->authorizeDoctorCanCallPatient($doctor->id, $patient->id);
+        $appointment = $this->findCallableAppointment($doctor->id, $patient->id, $request->integer('appointment_id'));
 
         $videoCall = VideoCall::create([
             'caller_id' => $doctor->id,
             'receiver_id' => $patient->id,
+            'appointment_id' => $appointment->id,
             'status' => 'initiated',
-        ])->load(['caller.role', 'receiver.role']);
+        ])->load(['caller.role', 'receiver.role', 'appointment']);
 
         broadcast(new VideoCallSignal($videoCall, $doctor, $patient->id, 'incoming-call'));
 
@@ -38,7 +39,7 @@ class VideoCallController extends Controller
 
     public function show(Request $request, VideoCall $videoCall): View
     {
-        $videoCall->load(['caller.role', 'receiver.role']);
+        $videoCall->load(['caller.role', 'receiver.role', 'appointment']);
         abort_unless($videoCall->hasParticipant($request->user()), 403);
 
         return view('video-call', [
@@ -116,8 +117,8 @@ class VideoCallController extends Controller
     {
         $validated = $request->validate([
             'video_call_id' => ['required', 'integer', 'exists:video_calls,id'],
-            'type' => ['required', 'string', 'in:offer,answer,ice-candidate'],
-            'payload' => ['required', 'array'],
+            'type' => ['required', 'string', 'in:call-ready,offer,answer,ice-candidate'],
+            'payload' => ['sometimes', 'array'],
         ]);
 
         $videoCall = VideoCall::with(['caller.role', 'receiver.role'])->findOrFail($validated['video_call_id']);
@@ -127,7 +128,7 @@ class VideoCallController extends Controller
         $otherUser = $videoCall->otherParticipant($request->user());
         abort_unless($otherUser, 403);
 
-        broadcast(new VideoCallSignal($videoCall, $request->user(), $otherUser->id, $validated['type'], $validated['payload']));
+        broadcast(new VideoCallSignal($videoCall, $request->user(), $otherUser->id, $validated['type'], $validated['payload'] ?? []));
 
         return response()->json(['message' => 'Signal sent.']);
     }
@@ -156,13 +157,22 @@ class VideoCallController extends Controller
         return $videoCall;
     }
 
-    private function authorizeDoctorCanCallPatient(int $doctorId, int $patientId): void
+    private function findCallableAppointment(int $doctorId, int $patientId, ?int $appointmentId): Appointment
     {
-        $hasAppointment = Appointment::where('doctor_id', $doctorId)
+        $query = Appointment::where('doctor_id', $doctorId)
             ->where('patient_id', $patientId)
-            ->where('status', 'approved')
-            ->exists();
+            ->where('status', 'approved');
 
-        abort_unless($hasAppointment, 403, 'Only patients with an approved appointment can be called.');
+        if ($appointmentId) {
+            $query->whereKey($appointmentId);
+        }
+
+        $appointment = $query->latest('appointment_date')
+            ->latest('appointment_time')
+            ->first();
+
+        abort_unless($appointment, 403, 'Only patients with an approved appointment can be called.');
+
+        return $appointment;
     }
 }

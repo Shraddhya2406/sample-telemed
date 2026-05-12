@@ -122,33 +122,52 @@
     };
 
     window.ensureTelemedEcho = window.ensureTelemedEcho || function () {
-        if (window.Echo) return Promise.resolve(window.Echo);
+        if (window.Echo && typeof window.Echo.private === 'function') return Promise.resolve(window.Echo);
         const config = window.telemedCallConfig.echo || {};
         if (!config.key) return Promise.reject(new Error('Broadcasting key is not configured.'));
 
         return window.loadTelemedScript('https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js')
             .then(function () {
-                return window.loadTelemedScript('https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js');
-            })
-            .then(function () {
-                window.Pusher = window.Pusher || Pusher;
-                const echoOptions = {
-                    broadcaster: 'pusher',
-                    key: config.key,
+                const pusherOptions = {
                     cluster: config.cluster,
                     forceTLS: Boolean(config.forceTLS),
                     enabledTransports: ['ws', 'wss'],
-                    authEndpoint: window.telemedCallConfig.routes.broadcastAuth,
-                    auth: { headers: { 'X-CSRF-TOKEN': window.telemedCallConfig.csrfToken } },
+                    channelAuthorization: {
+                        endpoint: window.telemedCallConfig.routes.broadcastAuth,
+                        headers: { 'X-CSRF-TOKEN': window.telemedCallConfig.csrfToken },
+                    },
                 };
 
                 if (config.wsHost && !String(config.wsHost).startsWith('api-')) {
-                    echoOptions.wsHost = config.wsHost;
-                    echoOptions.wsPort = Number(config.wsPort || 80);
-                    echoOptions.wssPort = Number(config.wssPort || 443);
+                    pusherOptions.wsHost = config.wsHost;
+                    pusherOptions.wsPort = Number(config.wsPort || 80);
+                    pusherOptions.wssPort = Number(config.wssPort || 443);
                 }
 
-                window.Echo = new Echo(echoOptions);
+                const pusher = new Pusher(config.key, pusherOptions);
+
+                window.Echo = {
+                    pusher: pusher,
+                    private: function (name) {
+                        const channel = pusher.subscribe('private-' + name);
+
+                        return {
+                            subscribed: function (callback) {
+                                channel.bind('pusher:subscription_succeeded', callback);
+                                return this;
+                            },
+                            error: function (callback) {
+                                channel.bind('pusher:subscription_error', callback);
+                                return this;
+                            },
+                            listen: function (eventName, callback) {
+                                channel.bind(String(eventName).replace(/^\./, ''), callback);
+                                return this;
+                            },
+                        };
+                    },
+                };
+
                 return window.Echo;
             });
     };

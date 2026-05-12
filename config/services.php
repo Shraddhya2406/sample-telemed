@@ -44,4 +44,15 @@ return [
         'fee' => env('APPOINTMENT_FEE', 500),
     ],
 
+    'webrtc' => [
+        'ice_servers' => array_values(array_filter([
+            ['urls' => env('WEBRTC_STUN_URL', 'stun:stun.l.google.com:19302')],
+            env('WEBRTC_TURN_URL') ? [
+                'urls' => env('WEBRTC_TURN_URL'),
+                'username' => env('WEBRTC_TURN_USERNAME'),
+                'credential' => env('WEBRTC_TURN_CREDENTIAL'),
+            ] : null,
+        ])),
+    ],
+
 ];
