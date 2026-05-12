@@ -13,6 +13,7 @@
         : (env('PUSHER_HOST') ?: null);
     $echoPort = $broadcastOptions['port'] ?? 80;
     $echoScheme = $broadcastOptions['scheme'] ?? 'http';
+    $appBaseUrl = request()->getSchemeAndHttpHost().rtrim(request()->getBaseUrl(), '/');
 @endphp
 <div id="incoming-call-popup" class="telemed-call-popup" hidden>
     <div class="telemed-call-panel" role="dialog" aria-live="polite" aria-labelledby="incoming-call-title">
@@ -98,9 +99,9 @@
             forceTLS: @json($echoScheme === 'https'),
         },
         routes: {
-            accept: @json(route('call.accept')),
-            reject: @json(route('call.reject')),
-            broadcastAuth: @json(url('/broadcasting/auth')),
+            accept: @json($appBaseUrl.'/call/accept'),
+            reject: @json($appBaseUrl.'/call/reject'),
+            broadcastAuth: @json($appBaseUrl.'/broadcasting/auth'),
         }
     });
 

@@ -2,11 +2,12 @@
     $currentUser = auth()->user();
     $currentRole = $currentUser?->role?->name;
     $layout = $currentRole === 'doctor' ? 'doctor.layout' : 'layouts.patient';
+    $appBaseUrl = request()->getSchemeAndHttpHost().rtrim(request()->getBaseUrl(), '/');
     $appointmentRedirectUrl = $videoCall->appointment
         ? ($currentRole === 'doctor'
-            ? route('doctor.appointments.show', $videoCall->appointment)
-            : route('patient.appointments.show', $videoCall->appointment))
-        : ($currentRole === 'doctor' ? route('doctor.appointments.index') : route('patient.appointments.index'));
+            ? $appBaseUrl.'/doctor/appointments/'.$videoCall->appointment_id
+            : $appBaseUrl.'/patient/appointments/'.$videoCall->appointment_id)
+        : ($currentRole === 'doctor' ? $appBaseUrl.'/doctor/appointments' : $appBaseUrl.'/patient/appointments');
 @endphp
 
 @extends($layout)
@@ -19,10 +20,10 @@
     data-is-caller="{{ $isCaller ? '1' : '0' }}"
     data-status="{{ $videoCall->status }}"
     data-current-user-id="{{ $currentUser->id }}"
-    data-signal-url="{{ url('/call/signal') }}"
-    data-accept-url="{{ url('/call/accept') }}"
-    data-reject-url="{{ url('/call/reject') }}"
-    data-end-url="{{ url('/call/end') }}"
+    data-signal-url="{{ $appBaseUrl }}/call/signal"
+    data-accept-url="{{ $appBaseUrl }}/call/accept"
+    data-reject-url="{{ $appBaseUrl }}/call/reject"
+    data-end-url="{{ $appBaseUrl }}/call/end"
     data-redirect-url="{{ $appointmentRedirectUrl }}"
     data-ice-servers='@json(config('services.webrtc.ice_servers'))'
 >

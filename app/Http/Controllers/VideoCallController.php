@@ -66,7 +66,7 @@ class VideoCallController extends Controller
 
         return response()->json([
             'message' => 'Call accepted.',
-            'call_url' => route('call.show', $videoCall),
+            'call_url' => $this->requestBaseUrl($request).'/call/'.$videoCall->id,
         ]);
     }
 
@@ -174,5 +174,10 @@ class VideoCallController extends Controller
         abort_unless($appointment, 403, 'Only patients with an approved appointment can be called.');
 
         return $appointment;
+    }
+
+    private function requestBaseUrl(Request $request): string
+    {
+        return $request->getSchemeAndHttpHost().rtrim($request->getBaseUrl(), '/');
     }
 }
