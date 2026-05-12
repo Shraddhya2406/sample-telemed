@@ -88,6 +88,8 @@
                 data-chat-messages
                 data-chat-variant="patient"
                 data-fetch-url="{{ route('patient.appointments.messages.index', $appointment) }}"
+                data-appointment-id="{{ $appointment->id }}"
+                data-current-user-id="{{ auth()->id() }}"
                 data-last-id="{{ $appointment->messages->max('id') ?? 0 }}"
             >
                 @forelse($appointment->messages->sortBy('id') as $message)

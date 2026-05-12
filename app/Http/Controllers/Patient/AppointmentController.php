@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Patient;
 
+use App\Events\AppointmentMessageSent;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\DoctorAvailability;
@@ -278,6 +279,8 @@ class AppointmentController extends Controller
             'sender_id' => $request->user()->id,
             'message' => $validated['message'],
         ])->load('sender');
+
+        broadcast(new AppointmentMessageSent($message))->toOthers();
 
         if ($request->expectsJson()) {
             return response()->json([

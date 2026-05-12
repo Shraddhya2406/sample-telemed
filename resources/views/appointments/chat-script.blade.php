@@ -127,10 +127,15 @@
         function appendMessages(container, messages) {
             const variant = container.dataset.chatVariant || 'patient';
             const empty = container.querySelector('[data-chat-empty]');
+            const currentUserId = Number(container.dataset.currentUserId || 0);
 
             messages.forEach(function (message) {
                 if (container.querySelector('[data-message-id="' + message.id + '"]')) {
                     return;
+                }
+
+                if (message.sender_id !== undefined && message.is_own === undefined) {
+                    message.is_own = Number(message.sender_id) === currentUserId;
                 }
 
                 if (empty) {
@@ -165,6 +170,28 @@
                 })
                 .then(function (data) {
                     appendMessages(container, data.messages || []);
+                });
+        }
+
+        function subscribeMessages(container) {
+            if (!container.dataset.appointmentId || typeof window.ensureTelemedEcho !== 'function') {
+                return Promise.reject(new Error('Realtime chat is not available.'));
+            }
+
+            return window.ensureTelemedEcho()
+                .then(function (echo) {
+                    echo.private('appointments.' + container.dataset.appointmentId)
+                        .subscribed(function () {
+                            fetchMessages(container).catch(function () {});
+                        })
+                        .error(function (error) {
+                            console.warn('Appointment chat subscription failed:', error);
+                        })
+                        .listen('.appointment.message.sent', function (event) {
+                            if (event.message) {
+                                appendMessages(container, [event.message]);
+                            }
+                        });
                 });
         }
 
@@ -231,9 +258,9 @@
             });
 
             fetchMessages(container).catch(function () {});
-            window.setInterval(function () {
-                fetchMessages(container).catch(function () {});
-            }, 3000);
+            subscribeMessages(container).catch(function (error) {
+                console.warn(error.message || 'Realtime chat is not available.');
+            });
         }
 
         if (document.readyState === 'loading') {
