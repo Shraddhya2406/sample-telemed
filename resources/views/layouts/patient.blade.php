@@ -161,6 +161,8 @@
     </div>
 </div>
 
+@include('call-popup')
+
 <script>
     (function () {
         const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

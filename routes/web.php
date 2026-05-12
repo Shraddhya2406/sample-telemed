@@ -21,6 +21,7 @@ use App\Http\Controllers\Doctor\DoctorAppointmentController;
 use App\Http\Controllers\Doctor\DoctorPrescriptionController;
 use App\Http\Controllers\Doctor\DoctorPatientController;
 use App\Http\Controllers\RazorpayController;
+use App\Http\Controllers\VideoCallController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -69,6 +70,7 @@ Route::middleware(['auth', 'is_doctor'])->prefix('doctor')->name('doctor.')->gro
 
     Route::get('/patients', [DoctorPatientController::class, 'index'])->name('patients.index');
     Route::get('/patients/{patient}', [DoctorPatientController::class, 'show'])->name('patients.show');
+    Route::get('/call/{patient}', [VideoCallController::class, 'start'])->name('call.start');
 
     Route::get('/appointments', [DoctorAppointmentController::class, 'index'])->name('appointments.index');
     Route::get('/appointments/{appointment}', [DoctorAppointmentController::class, 'show'])->name('appointments.show');
@@ -81,6 +83,14 @@ Route::middleware(['auth', 'is_doctor'])->prefix('doctor')->name('doctor.')->gro
     Route::get('/prescriptions/create', [DoctorPrescriptionController::class, 'create'])->name('prescriptions.create');
     Route::post('/prescriptions', [DoctorPrescriptionController::class, 'store'])->name('prescriptions.store');
     Route::get('/prescriptions/{prescription}', [DoctorPrescriptionController::class, 'show'])->name('prescriptions.show');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/call/{videoCall}', [VideoCallController::class, 'show'])->name('call.show');
+    Route::post('/call/accept', [VideoCallController::class, 'accept'])->name('call.accept');
+    Route::post('/call/reject', [VideoCallController::class, 'reject'])->name('call.reject');
+    Route::post('/call/end', [VideoCallController::class, 'end'])->name('call.end');
+    Route::post('/call/signal', [VideoCallController::class, 'signal'])->name('call.signal');
 });
 
 Route::middleware(['auth', 'role:patient'])->group(function () {

@@ -17,6 +17,11 @@
                     <div class="text-secondary">{{ $appointment->appointment_date?->format('d M Y') }} at {{ substr($appointment->appointment_time, 0, 5) }}</div>
                 </div>
                 <div class="d-flex flex-wrap align-items-start justify-content-end gap-2">
+                    @if($appointment->status === 'approved')
+                        <a href="{{ route('doctor.call.start', $appointment->patient) }}" class="btn btn-sm btn-success">
+                            <i class="bi bi-camera-video-fill me-1"></i> Start Video Call
+                        </a>
+                    @endif
                     @if($appointment->status === 'completed' && $appointment->prescription)
                         <a href="{{ route('doctor.prescriptions.show', $appointment->prescription) }}" class="btn btn-sm btn-outline-primary">View Prescription</a>
                     @endif

@@ -101,6 +101,16 @@ class User extends Authenticatable
         return $this->hasMany(Prescription::class, 'doctor_id');
     }
 
+    public function initiatedVideoCalls(): HasMany
+    {
+        return $this->hasMany(VideoCall::class, 'caller_id');
+    }
+
+    public function receivedVideoCalls(): HasMany
+    {
+        return $this->hasMany(VideoCall::class, 'receiver_id');
+    }
+
     public function quizAttempts(): HasMany
     {
         return $this->hasMany(QuizAttempt::class);
