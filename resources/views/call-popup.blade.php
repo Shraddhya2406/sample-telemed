@@ -100,6 +100,7 @@
         routes: {
             accept: @json(route('call.accept')),
             reject: @json(route('call.reject')),
+            broadcastAuth: @json(url('/broadcasting/auth')),
         }
     });
 
@@ -137,7 +138,7 @@
                     cluster: config.cluster,
                     forceTLS: Boolean(config.forceTLS),
                     enabledTransports: ['ws', 'wss'],
-                    authEndpoint: '/broadcasting/auth',
+                    authEndpoint: window.telemedCallConfig.routes.broadcastAuth,
                     auth: { headers: { 'X-CSRF-TOKEN': window.telemedCallConfig.csrfToken } },
                 };
 
