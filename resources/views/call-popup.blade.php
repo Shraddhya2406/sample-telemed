@@ -133,9 +133,50 @@
                     cluster: config.cluster,
                     forceTLS: Boolean(config.forceTLS),
                     enabledTransports: ['ws', 'wss'],
-                    channelAuthorization: {
-                        endpoint: window.telemedCallConfig.routes.broadcastAuth,
-                        headers: { 'X-CSRF-TOKEN': window.telemedCallConfig.csrfToken },
+                    authorizer: function (channel) {
+                        return {
+                            authorize: function (socketId, callback) {
+                                fetch(window.telemedCallConfig.routes.broadcastAuth, {
+                                    method: 'POST',
+                                    credentials: 'same-origin',
+                                    headers: {
+                                        'Accept': 'application/json',
+                                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                                        'X-CSRF-TOKEN': window.telemedCallConfig.csrfToken,
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                    },
+                                    body: new URLSearchParams({
+                                        socket_id: socketId,
+                                        channel_name: channel.name,
+                                    }),
+                                })
+                                    .then(function (response) {
+                                        return response.text().then(function (text) {
+                                            let data = null;
+
+                                            try {
+                                                data = text ? JSON.parse(text) : null;
+                                            } catch (error) {
+                                                throw new Error('Broadcast auth returned non-JSON response: ' + text.slice(0, 240));
+                                            }
+
+                                            if (!response.ok) {
+                                                throw new Error(data?.message || 'Broadcast auth failed with HTTP ' + response.status);
+                                            }
+
+                                            if (!data || !data.auth) {
+                                                throw new Error('Broadcast auth response did not include an auth token.');
+                                            }
+
+                                            callback(false, data);
+                                        });
+                                    })
+                                    .catch(function (error) {
+                                        console.warn('Broadcast auth failed:', error.message);
+                                        callback(true, error);
+                                    });
+                            },
+                        };
                     },
                 };
 
