@@ -97,7 +97,7 @@
                 class="vstack gap-2 mb-3"
                 data-chat-messages
                 data-chat-variant="doctor"
-                data-fetch-url="{{ request()->getSchemeAndHttpHost().rtrim(request()->getBaseUrl(), '/') }}/doctor/appointments/{{ $appointment->id }}/messages"
+                data-fetch-url="{{ rtrim(request()->getBaseUrl(), '/') }}/doctor/appointments/{{ $appointment->id }}/messages"
                 data-appointment-id="{{ $appointment->id }}"
                 data-current-user-id="{{ auth()->id() }}"
                 data-last-id="{{ $appointment->messages->max('id') ?? 0 }}"

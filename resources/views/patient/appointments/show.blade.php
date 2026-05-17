@@ -87,7 +87,7 @@
                 class="space-y-3 mb-4"
                 data-chat-messages
                 data-chat-variant="patient"
-                data-fetch-url="{{ request()->getSchemeAndHttpHost().rtrim(request()->getBaseUrl(), '/') }}/patient/appointments/{{ $appointment->id }}/messages"
+                data-fetch-url="{{ rtrim(request()->getBaseUrl(), '/') }}/patient/appointments/{{ $appointment->id }}/messages"
                 data-appointment-id="{{ $appointment->id }}"
                 data-current-user-id="{{ auth()->id() }}"
                 data-last-id="{{ $appointment->messages->max('id') ?? 0 }}"

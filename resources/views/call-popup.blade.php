@@ -7,13 +7,13 @@
     $broadcastConfig = config("broadcasting.connections.{$echoConnection}", []);
     $broadcastOptions = $broadcastConfig['options'] ?? [];
     $echoKey = $broadcastConfig['key'];
-    $echoCluster = $broadcastOptions['cluster'] ?? config('broadcasting.connections.pusher.options.cluster', 'mt1');
+    $echoCluster = ($broadcastOptions['cluster'] ?? config('broadcasting.connections.pusher.options.cluster')) ?: 'mt1';
     $echoHost = $echoConnection === 'reverb'
         ? ($broadcastOptions['host'] ?? null)
         : (env('PUSHER_HOST') ?: null);
     $echoPort = $broadcastOptions['port'] ?? 80;
     $echoScheme = $broadcastOptions['scheme'] ?? 'http';
-    $appBaseUrl = request()->getSchemeAndHttpHost().rtrim(request()->getBaseUrl(), '/');
+    $appBasePath = rtrim(request()->getBaseUrl(), '/');
 @endphp
 <div id="incoming-call-popup" class="telemed-call-popup" hidden>
     <div class="telemed-call-panel" role="dialog" aria-live="polite" aria-labelledby="incoming-call-title">
@@ -99,9 +99,9 @@
             forceTLS: @json($echoScheme === 'https'),
         },
         routes: {
-            accept: @json($appBaseUrl.'/call/accept'),
-            reject: @json($appBaseUrl.'/call/reject'),
-            broadcastAuth: @json($appBaseUrl.'/broadcasting/auth'),
+            accept: @json($appBasePath.'/call/accept'),
+            reject: @json($appBasePath.'/call/reject'),
+            broadcastAuth: @json($appBasePath.'/broadcasting/auth'),
         }
     });
 
@@ -157,7 +157,7 @@
                                             try {
                                                 data = text ? JSON.parse(text) : null;
                                             } catch (error) {
-                                                throw new Error('Broadcast auth returned non-JSON response: ' + text.slice(0, 240));
+                                                throw new Error('Broadcast auth returned non-JSON response with HTTP ' + response.status + ': ' + text.slice(0, 240));
                                             }
 
                                             if (!response.ok) {
@@ -165,15 +165,15 @@
                                             }
 
                                             if (!data || !data.auth) {
-                                                throw new Error('Broadcast auth response did not include an auth token.');
+                                                throw new Error('Broadcast auth response did not include an auth token. Response: ' + JSON.stringify(data).slice(0, 240));
                                             }
 
-                                            callback(false, data);
+                                            callback(null, data);
                                         });
                                     })
                                     .catch(function (error) {
                                         console.warn('Broadcast auth failed:', error.message);
-                                        callback(true, error);
+                                        callback(error, null);
                                     });
                             },
                         };
