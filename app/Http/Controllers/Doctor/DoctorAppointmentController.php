@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Events\AppointmentMessageSent;
 use App\Http\Controllers\Controller;
+use App\Models\AppNotification;
 use App\Models\Appointment;
 use App\Models\Message;
 use Illuminate\Http\JsonResponse;
@@ -31,6 +32,7 @@ class DoctorAppointmentController extends Controller
     public function show(Request $request, Appointment $appointment): View
     {
         $this->authorizeDoctorAppointment($request, $appointment);
+        $this->markAppointmentNotificationsRead($request->user()->id, $appointment);
 
         $appointment->load([
             'patient.quizAttempts.quizAnswers.healthQuestion',
@@ -51,6 +53,15 @@ class DoctorAppointmentController extends Controller
         ]);
 
         $appointment->update($validated);
+
+        AppNotification::create([
+            'user_id' => $appointment->patient_id,
+            'type' => 'appointment_status',
+            'title' => 'Appointment '.ucfirst($validated['status']),
+            'body' => 'Dr. '.$request->user()->name.' updated your appointment status.',
+            'url' => route('patient.appointments.show', $appointment),
+            'appointment_id' => $appointment->id,
+        ]);
 
         return back()->with('success', 'Appointment status updated.');
     }
@@ -107,6 +118,15 @@ class DoctorAppointmentController extends Controller
             'message' => $validated['message'],
         ])->load('sender');
 
+        AppNotification::create([
+            'user_id' => $appointment->patient_id,
+            'type' => 'appointment_message',
+            'title' => 'New message from Dr. '.$request->user()->name,
+            'body' => str($validated['message'])->limit(90)->toString(),
+            'url' => route('patient.appointments.show', $appointment).'#messages',
+            'appointment_id' => $appointment->id,
+        ]);
+
         broadcast(new AppointmentMessageSent($message))->toOthers();
 
         if ($request->expectsJson()) {
@@ -133,5 +153,13 @@ class DoctorAppointmentController extends Controller
     private function authorizeDoctorAppointment(Request $request, Appointment $appointment): void
     {
         abort_unless($appointment->doctor_id === $request->user()->id, 403);
+    }
+
+    private function markAppointmentNotificationsRead(int $userId, Appointment $appointment): void
+    {
+        AppNotification::where('user_id', $userId)
+            ->where('appointment_id', $appointment->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
     }
 }

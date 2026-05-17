@@ -22,6 +22,7 @@ use App\Http\Controllers\Doctor\DoctorPrescriptionController;
 use App\Http\Controllers\Doctor\DoctorPatientController;
 use App\Http\Controllers\RazorpayController;
 use App\Http\Controllers\VideoCallController;
+use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -86,6 +87,8 @@ Route::middleware(['auth', 'is_doctor'])->prefix('doctor')->name('doctor.')->gro
 });
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/notifications/{notification}', [NotificationController::class, 'open'])->name('notifications.open');
+
     Route::get('/call/{videoCall}', [VideoCallController::class, 'show'])->name('call.show');
     Route::post('/call/accept', [VideoCallController::class, 'accept'])->name('call.accept');
     Route::post('/call/reject', [VideoCallController::class, 'reject'])->name('call.reject');

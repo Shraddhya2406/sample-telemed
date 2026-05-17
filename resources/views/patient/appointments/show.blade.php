@@ -81,7 +81,7 @@
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded shadow dark:bg-slate-900 dark:border dark:border-slate-800">
+        <div id="messages" class="bg-white p-6 rounded shadow dark:bg-slate-900 dark:border dark:border-slate-800">
             <h2 class="text-lg font-bold mb-3 text-slate-950 dark:text-white">Messages</h2>
             <div
                 class="space-y-3 mb-4"

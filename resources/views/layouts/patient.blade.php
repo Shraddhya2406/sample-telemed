@@ -98,6 +98,36 @@
                 </nav>
 
                 <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <button type="button" id="notification-menu-button" class="relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-blue-200 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" aria-label="Notifications">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0a3 3 0 0 1-6 0"/></svg>
+                            <span class="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1.5 text-xs font-bold text-white" style="{{ $notificationUnreadCount > 0 ? '' : 'display:none' }}">{{ $notificationUnreadCount }}</span>
+                        </button>
+                        <div id="notification-menu" class="absolute right-0 mt-2 hidden w-80 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+                            <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                                <p class="text-sm font-bold text-slate-900 dark:text-white">Notifications</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ $notificationUnreadCount }} unread</p>
+                            </div>
+                            <div class="max-h-96 overflow-y-auto">
+                                @forelse($headerNotifications as $notification)
+                                    <a href="{{ route('notifications.open', $notification) }}" class="block border-b border-slate-100 px-4 py-3 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800">
+                                        <div class="flex items-start gap-3">
+                                            <span class="mt-1 h-2 w-2 shrink-0 rounded-full {{ $notification->read_at ? 'bg-slate-300 dark:bg-slate-600' : 'bg-blue-600' }}"></span>
+                                            <span class="min-w-0">
+                                                <span class="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{{ $notification->title }}</span>
+                                                @if($notification->body)
+                                                    <span class="mt-1 block text-xs leading-5 text-slate-500 dark:text-slate-400">{{ $notification->body }}</span>
+                                                @endif
+                                                <span class="mt-1 block text-[11px] font-medium text-slate-400">{{ $notification->created_at->diffForHumans() }}</span>
+                                            </span>
+                                        </div>
+                                    </a>
+                                @empty
+                                    <div class="px-4 py-5 text-sm text-slate-500 dark:text-slate-400">No notifications yet.</div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
                     <a href="{{ route('patient.cart.index') }}" id="cart-link" class="relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-blue-200 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h15l-1.5 9h-12L6 6Zm0 0 0-2H3m6 17a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm9 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg>
                         <span id="cart-count-badge" class="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1.5 text-xs font-bold text-white" style="{{ $cartCount > 0 ? '' : 'display:none' }}">{{ $cartCount }}</span>
@@ -166,6 +196,8 @@
 <script>
     (function () {
         const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const notificationButton = document.getElementById('notification-menu-button');
+        const notificationMenu = document.getElementById('notification-menu');
         const profileButton = document.getElementById('profile-menu-button');
         const profileMenu = document.getElementById('profile-menu');
         const themeToggle = document.getElementById('theme-toggle');
@@ -173,8 +205,13 @@
         const careHelpMinimize = document.getElementById('care-help-minimize');
         const careHelpRestore = document.getElementById('care-help-restore');
 
+        notificationButton?.addEventListener('click', () => notificationMenu?.classList.toggle('hidden'));
         profileButton?.addEventListener('click', () => profileMenu?.classList.toggle('hidden'));
         document.addEventListener('click', (event) => {
+            if (!notificationButton?.contains(event.target) && !notificationMenu?.contains(event.target)) {
+                notificationMenu?.classList.add('hidden');
+            }
+
             if (!profileButton?.contains(event.target) && !profileMenu?.contains(event.target)) {
                 profileMenu?.classList.add('hidden');
             }

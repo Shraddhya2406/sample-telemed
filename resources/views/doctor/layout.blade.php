@@ -19,6 +19,9 @@
         .doctor-main { flex: 1; min-width: 0; }
         .doctor-topbar { background: #fff; border-bottom: 1px solid #dbe7ee; }
         .doctor-card { background: #fff; border: 1px solid #dbe7ee; border-radius: .5rem; box-shadow: 0 8px 24px rgba(15, 118, 110, .07); }
+        .doctor-notification-menu { width: min(22rem, calc(100vw - 2rem)); max-height: 26rem; overflow-y: auto; }
+        .doctor-notification-dot { width: .5rem; height: .5rem; border-radius: 50%; flex: 0 0 auto; margin-top: .45rem; background: #0d6efd; }
+        .doctor-notification-dot.read { background: #ced4da; }
         .status-dot { width: .6rem; height: .6rem; border-radius: 50%; display: inline-block; }
         @media (max-width: 991.98px) { .doctor-sidebar { width: 100%; } }
         @media print {
@@ -64,6 +67,36 @@
                     <div>
                         <div class="text-uppercase small text-secondary fw-semibold">@yield('kicker', 'Clinical Workspace')</div>
                         <h1 class="h3 mb-0">@yield('page-title', 'Doctor Panel')</h1>
+                    </div>
+                    <div class="dropdown align-self-md-center">
+                        <button class="btn btn-outline-secondary position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+                            <i class="bi bi-bell"></i>
+                            @if($notificationUnreadCount > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ $notificationUnreadCount }}</span>
+                            @endif
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end doctor-notification-menu p-0 shadow">
+                            <div class="px-3 py-2 border-bottom">
+                                <div class="fw-semibold">Notifications</div>
+                                <div class="small text-secondary">{{ $notificationUnreadCount }} unread</div>
+                            </div>
+                            @forelse($headerNotifications as $notification)
+                                <a href="{{ route('notifications.open', $notification) }}" class="dropdown-item text-wrap border-bottom py-3">
+                                    <span class="d-flex gap-2">
+                                        <span class="doctor-notification-dot {{ $notification->read_at ? 'read' : '' }}"></span>
+                                        <span class="min-w-0">
+                                            <span class="d-block fw-semibold">{{ $notification->title }}</span>
+                                            @if($notification->body)
+                                                <span class="d-block small text-secondary">{{ $notification->body }}</span>
+                                            @endif
+                                            <span class="d-block small text-secondary">{{ $notification->created_at->diffForHumans() }}</span>
+                                        </span>
+                                    </span>
+                                </a>
+                            @empty
+                                <div class="px-3 py-4 text-secondary">No notifications yet.</div>
+                            @endforelse
+                        </div>
                     </div>
                 </div>
             </header>

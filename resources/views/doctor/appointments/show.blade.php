@@ -91,7 +91,7 @@
             </form>
         </div>
 
-        <div class="doctor-card p-3">
+        <div id="messages" class="doctor-card p-3">
             <h2 class="h5 mb-3">Messages</h2>
             <div
                 class="vstack gap-2 mb-3"
