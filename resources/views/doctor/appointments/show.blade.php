@@ -1,100 +1,131 @@
 @extends('doctor.layout')
 
 @section('title', 'Appointment')
-@section('page-title', 'Appointment with '.$appointment->patient->name)
+@section('page-title', 'Appointment Details')
 
 @section('content')
-@include('doctor.partials')
 @php
     $notesLocked = in_array($appointment->status, ['rejected', 'completed'], true);
 @endphp
-<div class="row g-4">
-    <div class="col-xl-8">
-        <div class="doctor-card p-3 mb-4">
-            <div class="d-flex flex-wrap gap-3 justify-content-between">
-                <div>
-                    <h2 class="h5 mb-1">{{ $appointment->patient->name }}</h2>
-                    <div class="text-secondary">{{ $appointment->appointment_date?->format('d M Y') }} at {{ substr($appointment->appointment_time, 0, 5) }}</div>
+
+<div class="grid gap-4 lg:grid-cols-3">
+    <section class="space-y-4 lg:col-span-2">
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 md:flex-row md:items-center md:justify-between">
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="truncate text-base font-bold text-slate-950">{{ $appointment->patient->name }}</h2>
+                        <x-doctor.status-badge :status="$appointment->status" />
+                    </div>
+                    <p class="truncate text-xs text-slate-500">{{ $appointment->patient->email }}</p>
+                    <p class="mt-1 text-xs font-semibold text-slate-700">{{ $appointment->appointment_date?->format('d M Y') }} at {{ substr($appointment->appointment_time, 0, 5) }}</p>
                 </div>
-                <div class="d-flex flex-wrap align-items-start justify-content-end gap-2">
+
+                <div class="flex flex-wrap gap-2">
                     @if($appointment->status === 'approved')
-                        <a href="{{ route('doctor.call.start', ['patient' => $appointment->patient, 'appointment_id' => $appointment->id]) }}" class="btn btn-sm btn-success">
-                            <i class="bi bi-camera-video-fill me-1"></i> Start Video Call
+                        <a href="{{ route('doctor.call.start', ['patient' => $appointment->patient, 'appointment_id' => $appointment->id]) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-600">
+                            <i data-lucide="video" class="h-4 w-4"></i>
+                            Start Call
                         </a>
                     @endif
                     @if($appointment->status === 'completed' && $appointment->prescription)
-                        <a href="{{ route('doctor.prescriptions.show', $appointment->prescription) }}" class="btn btn-sm btn-outline-primary">View Prescription</a>
+                        <a href="{{ route('doctor.prescriptions.show', $appointment->prescription) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50">
+                            Prescription
+                        </a>
                     @endif
-                    <span class="badge text-bg-{{ $statusClasses[$appointment->status] ?? 'secondary' }} align-self-start">{{ $statusLabels[$appointment->status] ?? ucfirst($appointment->status) }}</span>
+                    <a href="{{ route('doctor.patients.show', $appointment->patient) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700">
+                        History
+                    </a>
                 </div>
             </div>
+
             @if($appointment->status === 'pending')
-                <form method="POST" action="{{ route('doctor.appointments.status', $appointment) }}" class="d-flex flex-wrap gap-2 mt-3">
+                <form method="POST" action="{{ route('doctor.appointments.status', $appointment) }}" class="flex flex-wrap gap-2 border-b border-slate-200 px-4 py-3">
                     @csrf
                     @method('PATCH')
-                    <button name="status" value="approved" class="btn btn-sm btn-success">Accept</button>
-                    <button name="status" value="rejected" class="btn btn-sm btn-outline-danger">Reject</button>
+                    <button name="status" value="approved" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-600">
+                        <i data-lucide="check" class="h-4 w-4"></i>
+                        Accept
+                    </button>
+                    <button name="status" value="rejected" class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-semibold text-red-600 transition hover:bg-red-50">
+                        <i data-lucide="x" class="h-4 w-4"></i>
+                        Reject
+                    </button>
                 </form>
             @endif
-            <div class="row g-2 mt-3">
-                <div class="col-md-4">
-                    <div class="border rounded p-2 bg-light">
-                        <div class="small text-secondary">Consultation Fee</div>
-                        <div class="fw-semibold">Rs. {{ number_format((float) $appointment->consultation_fee, 2) }}</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="border rounded p-2 bg-light">
-                        <div class="small text-secondary">Payment Status</div>
-                        <div class="fw-semibold {{ $appointment->payment_status === 'paid' ? 'text-success' : '' }}">{{ ucfirst($appointment->payment_status ?? 'unpaid') }}</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="border rounded p-2 bg-light">
-                        <div class="small text-secondary">Payment ID</div>
-                        <div class="fw-semibold text-break">{{ $appointment->payment_id ?: 'N/A' }}</div>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <div class="doctor-card p-3 mb-4">
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                <h2 class="h5 mb-0">Consultation Notes</h2>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h2 class="text-base font-semibold text-slate-950">Consultation Notes</h2>
+                    <p class="text-xs text-slate-500">Diagnosis and advice for this appointment.</p>
+                </div>
                 @if($notesLocked)
-                    <span class="badge text-bg-light border">Locked</span>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                        <i data-lucide="lock" class="h-3.5 w-3.5"></i>
+                        Locked
+                    </span>
                 @endif
             </div>
-            <form method="POST" action="{{ route('doctor.appointments.notes', $appointment) }}">
+
+            <form method="POST" action="{{ route('doctor.appointments.notes', $appointment) }}" class="mt-3 space-y-3">
                 @csrf
                 @method('PATCH')
-                <div class="mb-3 border rounded p-3 bg-light">
-                    <div class="form-label fw-semibold mb-1">Symptoms</div>
-                    <div class="text-secondary">{{ $appointment->symptoms ?: 'Not provided' }}</div>
+
+                <div class="grid gap-3 md:grid-cols-2">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Symptoms</p>
+                        <p class="mt-1 max-h-16 overflow-y-auto rounded-lg bg-slate-50 px-3 py-2 text-sm leading-5 text-slate-600">{{ $appointment->symptoms ?: 'Not provided' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Patient Notes</p>
+                        <p class="mt-1 max-h-16 overflow-y-auto rounded-lg bg-slate-50 px-3 py-2 text-sm leading-5 text-slate-600">{{ $appointment->notes ?: 'Not provided' }}</p>
+                    </div>
                 </div>
-                <div class="mb-3 border rounded p-3 bg-light">
-                    <div class="form-label fw-semibold mb-1">Notes</div>
-                    <div class="text-secondary">{{ $appointment->notes ?: 'Not provided' }}</div>
+
+                <div class="grid gap-3 lg:grid-cols-2">
+                    <div>
+                        <label class="mb-1 block text-sm font-semibold text-slate-700">Diagnosis</label>
+                        <textarea name="diagnosis" class="min-h-32 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100" required @readonly($notesLocked)>{{ old('diagnosis', $appointment->diagnosis) }}</textarea>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-semibold text-slate-700">Advice</label>
+                        <textarea name="advice" class="min-h-32 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100" required @readonly($notesLocked)>{{ old('advice', $appointment->advice) }}</textarea>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Diagnosis</label>
-                    <textarea name="diagnosis" class="form-control" rows="3" required @readonly($notesLocked)>{{ old('diagnosis', $appointment->diagnosis) }}</textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Advice</label>
-                    <textarea name="advice" class="form-control" rows="3" required @readonly($notesLocked)>{{ old('advice', $appointment->advice) }}</textarea>
-                </div>
+
                 @unless($notesLocked)
-                    <button class="btn btn-success">Save</button>
-                    <button class="btn btn-outline-success" name="next" value="prescription">Create Prescription</button>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">
+                            <i data-lucide="save" class="h-4 w-4"></i>
+                            Save Notes
+                        </button>
+                        <button class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50" name="next" value="prescription">
+                            <i data-lucide="clipboard-plus" class="h-4 w-4"></i>
+                            Create Prescription
+                        </button>
+                    </div>
                 @endunless
             </form>
         </div>
+    </section>
 
-        <div id="messages" class="doctor-card p-3">
-            <h2 class="h5 mb-3">Messages</h2>
+    <aside class="space-y-4 lg:col-span-1 lg:sticky lg:top-24 lg:self-start">
+        <section id="messages" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-base font-semibold text-slate-950">Chat</h2>
+                    <p class="text-xs text-slate-500">Appointment messages</p>
+                </div>
+                <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+                    <i data-lucide="message-circle" class="h-3.5 w-3.5"></i>
+                    Live
+                </span>
+            </div>
+
             <div
-                class="vstack gap-2 mb-3"
+                class="mt-3"
                 data-chat-messages
                 data-chat-variant="doctor"
                 data-fetch-url="{{ rtrim(request()->getBaseUrl(), '/') }}/doctor/appointments/{{ $appointment->id }}/messages"
@@ -110,37 +141,69 @@
                         </div>
                     </div>
                 @empty
-                    <div class="text-secondary" data-chat-empty>No messages yet.</div>
+                    <x-doctor.empty-state title="No messages yet" message="Appointment messages will appear here." icon="message-circle" data-chat-empty class="py-6" />
                 @endforelse
             </div>
-            <form method="POST" action="{{ route('doctor.appointments.messages.store', $appointment) }}" data-chat-form>
-                @csrf
-                <textarea name="message" class="form-control mb-2" rows="2" placeholder="Write a message to the patient"></textarea>
-                <div class="small text-danger mb-2 d-none" data-chat-error></div>
-                <button class="btn btn-success">Send</button>
-            </form>
-        </div>
-    </div>
 
-    <div class="col-xl-4">
-        <div class="doctor-card p-3">
-            <h2 class="h5 mb-3">Quiz History</h2>
+            <form method="POST" action="{{ route('doctor.appointments.messages.store', $appointment) }}" class="mt-3" data-chat-form>
+                @csrf
+                <label class="sr-only" for="appointment-message">Write a message</label>
+                <textarea id="appointment-message" name="message" class="min-h-20 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="Write a message"></textarea>
+                <div class="mt-2 hidden text-sm font-medium text-red-600" data-chat-error></div>
+                <button class="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">
+                    <i data-lucide="send" class="h-4 w-4"></i>
+                    Send
+                </button>
+            </form>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 text-xs shadow-sm">
+            <h2 class="text-sm font-semibold text-slate-950">Payment Details</h2>
+            <dl class="mt-3 space-y-2">
+                <div class="flex justify-between gap-3 border-b border-slate-100 pb-2">
+                    <dt class="text-slate-500">Fee</dt>
+                    <dd class="text-right font-semibold text-slate-900">Rs. {{ number_format((float) $appointment->consultation_fee, 2) }}</dd>
+                </div>
+                <div class="flex justify-between gap-3 border-b border-slate-100 pb-2">
+                    <dt class="text-slate-500">Status</dt>
+                    <dd class="text-right font-semibold {{ $appointment->payment_status === 'paid' ? 'text-emerald-600' : 'text-slate-900' }}">{{ str($appointment->payment_status ?? 'unpaid')->headline() }}</dd>
+                </div>
+                <div class="flex justify-between gap-3 border-b border-slate-100 pb-2">
+                    <dt class="text-slate-500">Method</dt>
+                    <dd class="text-right font-semibold text-slate-900">{{ str($appointment->payment_method ?: 'N/A')->headline() }}</dd>
+                </div>
+                <div class="flex justify-between gap-3 border-b border-slate-100 pb-2">
+                    <dt class="text-slate-500">Paid At</dt>
+                    <dd class="text-right font-semibold text-slate-900">{{ $appointment->paid_at?->format('d M Y h:i A') ?: 'N/A' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-500">Payment ID</dt>
+                    <dd class="mt-1 break-words font-semibold text-slate-900">{{ $appointment->payment_id ?: 'N/A' }}</dd>
+                </div>
+            </dl>
+        </section>
+
+        {{--
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 class="text-base font-semibold text-slate-950">Quiz History</h2>
             @forelse($appointment->patient->quizAttempts as $attempt)
-                <div class="border rounded p-2 mb-2">
-                    <div class="fw-semibold">{{ $attempt->result_category }}</div>
-                    <div class="small text-secondary mb-2">{{ $attempt->created_at->format('d M Y') }}</div>
+                <div class="mt-3 rounded-xl border border-slate-200 p-3">
+                    <div class="font-semibold text-slate-950">{{ $attempt->result_category }}</div>
+                    <div class="mb-2 text-sm text-slate-500">{{ $attempt->created_at->format('d M Y') }}</div>
                     @foreach($attempt->quizAnswers as $answer)
-                        <div class="small">
+                        <div class="text-sm text-slate-600">
                             <strong>{{ $answer->healthQuestion?->question ?? 'Question unavailable' }}</strong><br>
                             {{ $answer->healthOption?->option_text ?? 'Answer unavailable' }}
                         </div>
                     @endforeach
                 </div>
             @empty
-                <div class="text-secondary">No quiz attempts found.</div>
+                <div class="mt-3 text-sm text-slate-500">No quiz attempts found.</div>
             @endforelse
-        </div>
-    </div>
+        </section>
+        --}}
+    </aside>
 </div>
+
 @include('appointments.chat-script')
 @endsection

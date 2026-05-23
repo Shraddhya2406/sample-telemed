@@ -23,6 +23,13 @@ class DoctorDashboardController extends Controller
             'appointments' => Appointment::forDoctor($doctorId)->count(),
             'prescriptions' => Prescription::where('doctor_id', $doctorId)->count(),
             'pending' => Appointment::forDoctor($doctorId)->where('status', 'pending')->count(),
+            'today' => Appointment::forDoctor($doctorId)->whereDate('appointment_date', today())->count(),
+            'completed' => Appointment::forDoctor($doctorId)->where('status', 'completed')->count(),
+            'pending_prescriptions' => Appointment::forDoctor($doctorId)
+                ->where('status', 'approved')
+                ->whereNotNull('diagnosis')
+                ->whereDoesntHave('prescription')
+                ->count(),
         ];
 
         $appointments = Appointment::with('patient')
@@ -32,7 +39,22 @@ class DoctorDashboardController extends Controller
             ->take(6)
             ->get();
 
-        return view('doctor.dashboard', compact('stats', 'appointments'));
+        $todayAppointments = Appointment::with('patient')
+            ->forDoctor($doctorId)
+            ->whereDate('appointment_date', today())
+            ->orderBy('appointment_time')
+            ->get();
+
+        $upcomingConsultations = Appointment::with('patient')
+            ->forDoctor($doctorId)
+            ->where('status', 'approved')
+            ->whereDate('appointment_date', '>=', today())
+            ->orderBy('appointment_date')
+            ->orderBy('appointment_time')
+            ->take(4)
+            ->get();
+
+        return view('doctor.dashboard', compact('stats', 'appointments', 'todayAppointments', 'upcomingConsultations'));
     }
 
     public function profile(Request $request): View
