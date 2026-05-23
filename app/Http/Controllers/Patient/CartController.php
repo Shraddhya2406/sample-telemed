@@ -72,12 +72,14 @@ class CartController extends Controller
         $itemSubtotal = (float) $cartItem->quantity * (float) $cartItem->price;
         $cartTotal = $cart ? $cart->items->sum(function ($i) { return $i->quantity * (float) $i->price; }) : 0;
         $cartCount = $cart ? $cart->items()->count() : 0;
+        $cartQuantity = $cart ? $cart->items->sum('quantity') : 0;
 
         if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Cart updated.',
                 'cart_count' => $cartCount,
+                'cart_quantity' => $cartQuantity,
                 'cart_total' => $cartTotal,
                 'item_id' => $cartItem->id,
                 'item_subtotal' => $itemSubtotal,

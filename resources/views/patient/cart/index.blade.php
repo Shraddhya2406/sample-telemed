@@ -28,7 +28,7 @@
                         <span>Medicine</span>
                         <span>Price</span>
                         <span>Quantity</span>
-                        <span class="text-right">Subtotal</span>
+                        <span>Subtotal</span>
                     </div>
                     <div class="divide-y divide-slate-100 dark:divide-slate-800">
                         @foreach($cart->items as $item)
@@ -46,11 +46,12 @@
                                 </div>
                                 <div class="text-sm font-semibold text-slate-700 dark:text-slate-200">Rs. {{ number_format($item->price, 2) }}</div>
                                 <div>
-                                    <form action="{{ route('patient.cart.update') }}" method="POST" class="ajax-update-cart flex items-center gap-2" data-item-id="{{ $item->id }}">
+                                    <form action="{{ route('patient.cart.update') }}" method="POST" class="ajax-update-cart inline-flex items-center overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950" data-item-id="{{ $item->id }}">
                                         @csrf
                                         <input type="hidden" name="cart_item_id" value="{{ $item->id }}">
-                                        <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" max="{{ $item->medicine->stock_quantity ?? $item->quantity }}" class="h-10 w-20 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950">
-                                        <button type="submit" class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-bold text-white transition hover:bg-slate-700 dark:bg-slate-700">Update</button>
+                                        <button type="button" data-cart-quantity-step="-1" class="flex h-9 w-9 items-center justify-center text-lg font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800" aria-label="Decrease quantity" @disabled($item->quantity <= 1)>-</button>
+                                        <input type="text" name="quantity" value="{{ $item->quantity }}" min="1" max="{{ $item->medicine->stock_quantity ?? $item->quantity }}" class="h-9 w-12 border-x border-slate-200 bg-transparent px-1 text-center text-sm font-bold text-slate-950 outline-none [appearance:textfield] focus:bg-blue-50 dark:border-slate-700 dark:text-white dark:focus:bg-slate-900 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" readonly>
+                                        <button type="button" data-cart-quantity-step="1" class="flex h-9 w-9 items-center justify-center text-lg font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800" aria-label="Increase quantity" @disabled($item->quantity >= ($item->medicine->stock_quantity ?? $item->quantity))>+</button>
                                     </form>
                                 </div>
                                 <div class="flex items-center justify-between gap-3 md:justify-end">
@@ -58,7 +59,11 @@
                                     <form action="{{ route('patient.cart.remove') }}" method="POST" class="ajax-remove-item" data-item-id="{{ $item->id }}">
                                         @csrf
                                         <input type="hidden" name="cart_item_id" value="{{ $item->id }}">
-                                        <button type="submit" class="rounded-lg bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700 transition hover:bg-rose-100 dark:bg-rose-950 dark:text-rose-300">Remove</button>
+                                        <button type="submit" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 text-rose-700 transition hover:bg-rose-100 dark:bg-rose-950 dark:text-rose-300" aria-label="Remove item" title="Remove item">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12m-10 0 .7 12.2A2 2 0 0 0 10.7 21h2.6a2 2 0 0 0 2-1.8L16 7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2m-4 4v6m4-6v6"/>
+                                            </svg>
+                                        </button>
                                     </form>
                                 </div>
                             </div>
@@ -71,7 +76,7 @@
                     <div class="mt-5 space-y-3 text-sm">
                         <div class="flex justify-between text-slate-600 dark:text-slate-300">
                             <span>Items</span>
-                            <span>{{ $cart->items->sum('quantity') }}</span>
+                            <span id="cart-items-total">{{ $cart->items->sum('quantity') }}</span>
                         </div>
                         <div class="flex justify-between text-slate-600 dark:text-slate-300">
                             <span>Delivery</span>

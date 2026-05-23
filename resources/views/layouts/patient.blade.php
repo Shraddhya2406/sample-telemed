@@ -301,7 +301,53 @@
                 });
             });
 
+            function syncQuantityButtons(form) {
+                const input = form.querySelector('input[name="quantity"]');
+                if (!input) return;
+
+                const value = Number(input.value || input.min || 1);
+                const min = Number(input.min || 1);
+                const max = input.max ? Number(input.max) : Infinity;
+
+                form.querySelectorAll('[data-cart-quantity-step]').forEach((button) => {
+                    const step = Number(button.dataset.cartQuantityStep || 0);
+                    button.disabled = step < 0 ? value <= min : value >= max;
+                });
+            }
+
             document.querySelectorAll('form.ajax-update-cart').forEach((form) => {
+                const quantityInput = form.querySelector('input[name="quantity"]');
+
+                syncQuantityButtons(form);
+
+                form.querySelectorAll('[data-cart-quantity-step]').forEach((button) => {
+                    button.addEventListener('click', () => {
+                        if (!quantityInput) return;
+
+                        const min = Number(quantityInput.min || 1);
+                        const max = quantityInput.max ? Number(quantityInput.max) : Infinity;
+                        const step = Number(button.dataset.cartQuantityStep || 0);
+                        const current = Number(quantityInput.value || min);
+                        const next = Math.min(max, Math.max(min, current + step));
+
+                        if (next === current) return;
+                        quantityInput.value = next;
+                        syncQuantityButtons(form);
+                        form.requestSubmit();
+                    });
+                });
+
+                if (quantityInput) {
+                    quantityInput.addEventListener('change', () => {
+                        const min = Number(quantityInput.min || 1);
+                        const max = quantityInput.max ? Number(quantityInput.max) : Infinity;
+                        const current = Number(quantityInput.value || min);
+                        quantityInput.value = Math.min(max, Math.max(min, current));
+                        syncQuantityButtons(form);
+                        form.requestSubmit();
+                    });
+                }
+
                 form.addEventListener('submit', (ev) => {
                     ev.preventDefault();
                     postForm(form, (data) => {
@@ -314,6 +360,11 @@
                             if (totalEl) totalEl.textContent = 'Total: ' + formatCurrency(data.cart_total);
                         }
                         if (typeof data.cart_count !== 'undefined') updateCartCount(data.cart_count);
+                        if (typeof data.cart_quantity !== 'undefined') {
+                            const itemsTotalEl = document.getElementById('cart-items-total');
+                            if (itemsTotalEl) itemsTotalEl.textContent = data.cart_quantity;
+                        }
+                        syncQuantityButtons(form);
                         showAjaxFlash(data.message || 'Cart updated.', true);
                     });
                 });
