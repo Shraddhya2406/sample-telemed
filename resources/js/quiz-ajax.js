@@ -303,6 +303,7 @@ const QuizManager = {
         const errorEl = document.getElementById('error-message');
         errorEl.textContent = message;
         errorEl.classList.remove('hidden');
+        window.showPatientToast?.(message, 'error');
     },
 
     showLoading(show) {
@@ -335,6 +336,7 @@ const QuizManager = {
         if (errorP) {
             errorP.textContent = message;
         }
+        window.showPatientToast?.(message, 'error');
         this.showLoading(false);
         this.showContent(false);
     },

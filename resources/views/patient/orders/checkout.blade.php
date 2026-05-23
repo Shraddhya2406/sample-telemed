@@ -39,20 +39,6 @@
             <form action="{{ route('patient.orders.place') }}" method="POST" class="mt-6 bg-gray-50 p-4 rounded" id="checkout-form">
                 @csrf
 
-                @if($errors->any())
-                    <div class="mb-4">
-                        <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
-                            <ul class="list-disc pl-5">
-                                @foreach($errors->all() as $err)
-                                    <li>{{ $err }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </div>
-                @endif
-
-                <div id="payment-message" class="hidden mb-4 px-4 py-3 rounded"></div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="payment_method" class="block text-sm font-medium text-gray-700">Payment Method</label>
@@ -95,8 +81,6 @@
             const button = document.getElementById('place-order-btn');
             const spinner = document.getElementById('btn-spinner');
             const buttonText = document.getElementById('btn-text');
-            const message = document.getElementById('payment-message');
-
             function setLoading(isLoading, text) {
                 button.disabled = isLoading;
                 spinner.classList.toggle('hidden', !isLoading);
@@ -104,12 +88,7 @@
             }
 
             function showMessage(text, type) {
-                message.textContent = text;
-                message.className = 'mb-4 px-4 py-3 rounded ' + (
-                    type === 'error'
-                        ? 'bg-red-50 border border-red-200 text-red-800'
-                        : 'bg-green-50 border border-green-200 text-green-800'
-                );
+                window.showPatientToast?.(text, type === 'error' ? 'error' : 'success');
             }
 
             function loadRazorpayCheckout() {

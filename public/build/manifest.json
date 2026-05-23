@@ -13,7 +13,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-ClHl2Qzo.css",
+    "file": "assets/app-BtnpIKJe.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -31,7 +31,7 @@
     ]
   },
   "resources/js/quiz-ajax.js": {
-    "file": "assets/quiz-ajax-DQNMB19y.js",
+    "file": "assets/quiz-ajax-0aGDsmsI.js",
     "name": "quiz-ajax",
     "src": "resources/js/quiz-ajax.js",
     "isEntry": true,

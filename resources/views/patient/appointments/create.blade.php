@@ -33,8 +33,6 @@
         <input type="hidden" name="appointment_date" id="appointment_date" value="{{ old('appointment_date') }}" required>
         <input type="hidden" name="appointment_time" id="appointment_time" value="{{ old('appointment_time') }}" required>
 
-        <div id="payment_message" class="hidden mb-4 px-4 py-3 rounded"></div>
-
         <div class="grid grid-cols-1 gap-4">
             <div>
                 <label class="block font-semibold mb-2 text-slate-950 dark:text-white">Doctor</label>
@@ -144,7 +142,6 @@
         const payButton = document.getElementById('pay_book_button');
         const paymentSpinner = document.getElementById('payment_spinner');
         const paymentButtonText = document.getElementById('payment_button_text');
-        const paymentMessage = document.getElementById('payment_message');
         const empty = document.getElementById('slot_empty');
         const slotError = document.getElementById('slot_error');
         const dateInput = document.getElementById('appointment_date');
@@ -175,12 +172,7 @@
         }
 
         function showPaymentMessage(text, type) {
-            paymentMessage.textContent = text;
-            paymentMessage.className = 'mb-4 px-4 py-3 rounded ' + (
-                type === 'error'
-                    ? 'bg-red-50 border border-red-200 text-red-800'
-                    : 'bg-green-50 border border-green-200 text-green-800'
-            );
+            window.showPatientToast?.(text, type === 'error' ? 'error' : 'success');
         }
 
         function loadRazorpayCheckout() {
@@ -345,6 +337,7 @@
         function showSlotError(message) {
             slotError.textContent = message;
             slotError.classList.remove('hidden');
+            window.showPatientToast?.(message, 'error');
         }
 
         function clearSlotError() {

@@ -159,22 +159,6 @@
         </header>
 
         <main class="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            @if(session('success'))
-                <div class="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200">{{ session('success') }}</div>
-            @endif
-            @if(session('error'))
-                <div class="mb-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-200">{{ session('error') }}</div>
-            @endif
-            @if($errors->any())
-                <div class="mb-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-200">
-                    <ul class="list-disc pl-5">
-                        @foreach($errors->all() as $err)
-                            <li>{{ $err }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-            <div id="ajax-flash" class="mb-5 hidden"></div>
             @yield('content')
         </main>
 
@@ -190,6 +174,8 @@
         </nav>
     </div>
 </div>
+
+<div id="patient-toast-container" class="fixed right-4 top-4 z-[80] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-3 sm:right-6 sm:top-6" aria-live="polite" aria-atomic="true"></div>
 
 @include('call-popup')
 
@@ -236,15 +222,83 @@
         careHelpMinimize?.addEventListener('click', () => setCareHelpMinimized(true));
         careHelpRestore?.addEventListener('click', () => setCareHelpMinimized(false));
 
+        function toastMessages(message) {
+            if (Array.isArray(message)) return message.filter(Boolean);
+            return String(message || '')
+                .split(/<br\s*\/?>|\n/i)
+                .map((item) => item.trim())
+                .filter(Boolean);
+        }
+
+        function showPatientToast(message, type = 'success') {
+            const container = document.getElementById('patient-toast-container');
+            if (!container) return;
+
+            const variant = type === 'error' ? 'error' : 'success';
+            const messages = toastMessages(message);
+            if (!messages.length) return;
+
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto overflow-hidden rounded-lg border bg-white shadow-xl ring-1 ring-black/5 transition duration-200 dark:bg-slate-900 ' + (
+                variant === 'error'
+                    ? 'border-rose-200 dark:border-rose-900/70'
+                    : 'border-emerald-200 dark:border-emerald-900/70'
+            );
+
+            const content = document.createElement('div');
+            content.className = 'flex gap-3 p-4';
+
+            const icon = document.createElement('div');
+            icon.className = 'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ' + (
+                variant === 'error'
+                    ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
+                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+            );
+            icon.innerHTML = variant === 'error'
+                ? '<svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>'
+                : '<svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7"/></svg>';
+
+            const body = document.createElement('div');
+            body.className = 'min-w-0 flex-1';
+
+            const title = document.createElement('p');
+            title.className = 'text-sm font-bold ' + (
+                variant === 'error' ? 'text-rose-900 dark:text-rose-100' : 'text-emerald-900 dark:text-emerald-100'
+            );
+            title.textContent = variant === 'error' ? 'Something went wrong' : 'Success';
+            body.appendChild(title);
+
+            messages.forEach((item) => {
+                const line = document.createElement('p');
+                line.className = 'mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300';
+                line.textContent = item;
+                body.appendChild(line);
+            });
+
+            const close = document.createElement('button');
+            close.type = 'button';
+            close.className = 'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100';
+            close.setAttribute('aria-label', 'Dismiss notification');
+            close.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6 6 18"/></svg>';
+
+            const dismiss = () => {
+                toast.classList.add('translate-x-3', 'opacity-0');
+                setTimeout(() => toast.remove(), 200);
+            };
+            close.addEventListener('click', dismiss);
+
+            content.appendChild(icon);
+            content.appendChild(body);
+            content.appendChild(close);
+            toast.appendChild(content);
+            container.appendChild(toast);
+            setTimeout(dismiss, variant === 'error' ? 6000 : 4000);
+        }
+
+        window.showPatientToast = showPatientToast;
+
         function showAjaxFlash(message, success = true) {
-            const el = document.getElementById('ajax-flash');
-            if (!el) return;
-            el.classList.remove('hidden');
-            el.innerHTML = message;
-            el.className = success
-                ? 'mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
-                : 'mb-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-200';
-            setTimeout(() => { el.classList.add('hidden'); }, 4000);
+            showPatientToast(message, success ? 'success' : 'error');
         }
 
         function updateCartCount(count) {
@@ -265,7 +319,7 @@
         function handleAjaxResponse(res, onSuccess) {
             return res.json().then((data) => {
                 if (!res.ok) {
-                    const msg = data.message || (data.errors ? Object.values(data.errors).flat().join('<br>') : 'Request failed');
+                    const msg = data.message || (data.errors ? Object.values(data.errors).flat() : 'Request failed');
                     showAjaxFlash(msg, false);
                     return null;
                 }
@@ -291,6 +345,26 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            const flashMessages = [
+                @if(session('success'))
+                    { type: 'success', message: @json(session('success')) },
+                @endif
+                @if(session('status'))
+                    { type: 'success', message: @json(session('status')) },
+                @endif
+                @if(session('message'))
+                    { type: 'success', message: @json(session('message')) },
+                @endif
+                @if(session('error'))
+                    { type: 'error', message: @json(session('error')) },
+                @endif
+                @if($errors->any())
+                    { type: 'error', message: @json($errors->all()) },
+                @endif
+            ];
+
+            flashMessages.forEach((flash) => showPatientToast(flash.message, flash.type));
+
             document.querySelectorAll('form.ajax-add-to-cart').forEach((form) => {
                 form.addEventListener('submit', (ev) => {
                     ev.preventDefault();

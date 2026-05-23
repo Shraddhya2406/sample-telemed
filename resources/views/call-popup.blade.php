@@ -258,7 +258,7 @@
             accept.disabled = true;
             post(window.telemedCallConfig.routes.accept, { video_call_id: activeCall.video_call_id })
                 .then(function (data) { window.location.href = data.call_url; })
-                .catch(function (error) { alert(error.message); })
+                .catch(function (error) { window.showPatientToast ? window.showPatientToast(error.message, 'error') : alert(error.message); })
                 .finally(function () { accept.disabled = false; });
         });
 
@@ -267,7 +267,7 @@
             reject.disabled = true;
             post(window.telemedCallConfig.routes.reject, { video_call_id: activeCall.video_call_id })
                 .then(function () { popup.hidden = true; activeCall = null; })
-                .catch(function (error) { alert(error.message); })
+                .catch(function (error) { window.showPatientToast ? window.showPatientToast(error.message, 'error') : alert(error.message); })
                 .finally(function () { reject.disabled = false; });
         });
 
