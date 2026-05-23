@@ -196,6 +196,7 @@
 <script>
     (function () {
         const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const medicinesUrl = @json(route('patient.medicines.index'));
         const notificationButton = document.getElementById('notification-menu-button');
         const notificationMenu = document.getElementById('notification-menu');
         const profileButton = document.getElementById('profile-menu-button');
@@ -331,7 +332,7 @@
                         if (typeof data.cart_count !== 'undefined') updateCartCount(data.cart_count);
                         if (data.cart_count === 0) {
                             const wrapper = document.getElementById('cart-wrapper');
-                            if (wrapper) wrapper.innerHTML = '<div class="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">Your cart is empty. <a href="' + window.location.origin + '/patient/medicines' + '" class="font-semibold text-blue-600">Browse medicines</a></div>';
+                            if (wrapper) wrapper.innerHTML = '<div class="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">Your cart is empty. <a href="' + medicinesUrl + '" class="font-semibold text-blue-600">Browse medicines</a></div>';
                         }
                         showAjaxFlash(data.message || 'Item removed.', true);
                     });
@@ -343,7 +344,7 @@
                     ev.preventDefault();
                     postForm(form, (data) => {
                         const wrapper = document.getElementById('cart-wrapper');
-                        if (wrapper) wrapper.innerHTML = '<div class="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">Your cart is empty. <a href="' + window.location.origin + '/patient/medicines' + '" class="font-semibold text-blue-600">Browse medicines</a></div>';
+                        if (wrapper) wrapper.innerHTML = '<div class="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">Your cart is empty. <a href="' + medicinesUrl + '" class="font-semibold text-blue-600">Browse medicines</a></div>';
                         if (typeof data.cart_count !== 'undefined') updateCartCount(data.cart_count);
                         const totalEl = document.getElementById('cart-total');
                         if (totalEl) totalEl.textContent = 'Total: ' + formatCurrency(data.cart_total || 0);

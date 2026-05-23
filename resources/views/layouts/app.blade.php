@@ -31,7 +31,7 @@
                     <a href="{{ $roleName === 'doctor' ? route('doctor.dashboard') : url('/dashboard/patient') }}" class="text-gray-700 hover:text-blue-600">Dashboard</a>
                     @if($roleName === 'patient')
                         <a href="{{ route('patient.appointments.index') }}" class="text-gray-700 hover:text-blue-600">Appointments</a>
-                        <a href="{{ url('/patient/medicines') }}" class="text-gray-700 hover:text-blue-600">Store</a>
+                        <a href="{{ route('patient.medicines.index') }}" class="text-gray-700 hover:text-blue-600">Store</a>
                     @endif
 
                     <!-- Cart link with persistent badge -->
@@ -97,6 +97,7 @@
     <script>
         (function () {
             const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const medicinesUrl = @json(route('patient.medicines.index'));
 
             function showAjaxFlash(message, success = true) {
                 const el = document.getElementById('ajax-flash');
@@ -228,7 +229,7 @@
                     if (data.cart_count === 0) {
                         const wrapper = document.getElementById('cart-wrapper');
                         if (wrapper) {
-                            wrapper.innerHTML = '<div class="bg-white p-6 rounded shadow-sm">Your cart is empty. <a href="' + window.location.origin + '/patient/medicines' + '" class="text-blue-600">Browse medicines</a></div>';
+                            wrapper.innerHTML = '<div class="bg-white p-6 rounded shadow-sm">Your cart is empty. <a href="' + medicinesUrl + '" class="text-blue-600">Browse medicines</a></div>';
                         }
                     }
 
@@ -257,7 +258,7 @@
                     // replace cart wrapper with empty message
                     const wrapper = document.getElementById('cart-wrapper');
                     if (wrapper) {
-                        wrapper.innerHTML = '<div class="bg-white p-6 rounded shadow-sm">Your cart is empty. <a href="' + window.location.origin + '/patient/medicines' + '" class="text-blue-600">Browse medicines</a></div>';
+                        wrapper.innerHTML = '<div class="bg-white p-6 rounded shadow-sm">Your cart is empty. <a href="' + medicinesUrl + '" class="text-blue-600">Browse medicines</a></div>';
                     }
 
                     if (typeof data.cart_count !== 'undefined') updateCartCount(data.cart_count);
