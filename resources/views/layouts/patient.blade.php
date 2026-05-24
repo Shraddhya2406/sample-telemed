@@ -238,6 +238,8 @@
             const messages = toastMessages(message);
             if (!messages.length) return;
 
+            window.playTelemedSound?.(variant === 'error' ? 'error' : 'notification');
+
             const toast = document.createElement('div');
             toast.className = 'pointer-events-auto overflow-hidden rounded-lg border bg-white shadow-xl ring-1 ring-black/5 transition duration-200 dark:bg-slate-900 ' + (
                 variant === 'error'

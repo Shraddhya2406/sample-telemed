@@ -124,10 +124,12 @@
             error.classList.toggle('d-none', !text);
         }
 
-        function appendMessages(container, messages) {
+        function appendMessages(container, messages, options) {
+            options = options || {};
             const variant = container.dataset.chatVariant || 'patient';
             const empty = container.querySelector('[data-chat-empty]');
             const currentUserId = Number(container.dataset.currentUserId || 0);
+            let shouldPlaySound = false;
 
             messages.forEach(function (message) {
                 if (container.querySelector('[data-message-id="' + message.id + '"]')) {
@@ -144,10 +146,18 @@
 
                 container.insertAdjacentHTML('beforeend', messageHtml(message, variant));
                 container.dataset.lastId = Math.max(Number(container.dataset.lastId || 0), Number(message.id));
+
+                if (options.playSound && !message.is_own) {
+                    shouldPlaySound = true;
+                }
             });
 
             if (messages.length > 0) {
                 container.scrollTop = container.scrollHeight;
+            }
+
+            if (shouldPlaySound) {
+                window.playTelemedSound?.('message');
             }
         }
 
@@ -189,7 +199,7 @@
                         })
                         .listen('.appointment.message.sent', function (event) {
                             if (event.message) {
-                                appendMessages(container, [event.message]);
+                                appendMessages(container, [event.message], { playSound: true });
                             }
                         });
                 });

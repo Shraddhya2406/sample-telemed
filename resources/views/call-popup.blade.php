@@ -214,6 +214,113 @@
             });
     };
 
+    window.telemedSound = window.telemedSound || (function () {
+        let audioContext = null;
+        let ringtoneTimer = null;
+        let ringtoneStartedAt = 0;
+
+        function getContext() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return null;
+
+            if (!audioContext) {
+                audioContext = new AudioContext();
+            }
+
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().catch(function () {});
+            }
+
+            return audioContext;
+        }
+
+        function playTone(frequency, start, duration, volume) {
+            const context = getContext();
+            if (!context) return;
+
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            const startTime = context.currentTime + start;
+            const endTime = startTime + duration;
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, startTime);
+            gain.gain.setValueAtTime(0.0001, startTime);
+            gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.025);
+            gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
+
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.start(startTime);
+            oscillator.stop(endTime + 0.04);
+        }
+
+        function play(kind) {
+            if (document.hidden && kind !== 'call') {
+                return;
+            }
+
+            if (kind === 'call') {
+                playTone(880, 0, 0.18, 0.08);
+                playTone(660, 0.22, 0.18, 0.07);
+                playTone(880, 0.48, 0.18, 0.08);
+                return;
+            }
+
+            if (kind === 'message') {
+                playTone(740, 0, 0.08, 0.045);
+                playTone(980, 0.1, 0.1, 0.045);
+                return;
+            }
+
+            if (kind === 'error') {
+                playTone(330, 0, 0.1, 0.055);
+                playTone(220, 0.12, 0.16, 0.05);
+                return;
+            }
+
+            playTone(660, 0, 0.08, 0.045);
+            playTone(880, 0.1, 0.1, 0.045);
+        }
+
+        function startRingtone() {
+            stopRingtone();
+            ringtoneStartedAt = Date.now();
+            play('call');
+            ringtoneTimer = window.setInterval(function () {
+                if (Date.now() - ringtoneStartedAt > 45000) {
+                    stopRingtone();
+                    return;
+                }
+
+                play('call');
+            }, 1400);
+        }
+
+        function stopRingtone() {
+            if (ringtoneTimer) {
+                window.clearInterval(ringtoneTimer);
+                ringtoneTimer = null;
+            }
+        }
+
+        ['pointerdown', 'keydown', 'touchstart'].forEach(function (eventName) {
+            window.addEventListener(eventName, function () {
+                getContext();
+            }, { once: true, passive: true });
+        });
+
+        return {
+            play: play,
+            startRingtone: startRingtone,
+            stopRingtone: stopRingtone,
+        };
+    })();
+
+    window.playTelemedSound = window.playTelemedSound || function (kind) {
+        window.telemedSound?.play(kind);
+    };
+
     (function () {
         const popup = document.getElementById('incoming-call-popup');
         if (!popup || window.telemedIncomingCallLoaded) return;
@@ -251,11 +358,13 @@
             role.textContent = event.caller?.role || event.from?.role || 'doctor';
             initial.textContent = name.charAt(0).toUpperCase();
             popup.hidden = false;
+            window.telemedSound?.startRingtone();
         }
 
         accept?.addEventListener('click', function () {
             if (!activeCall) return;
             accept.disabled = true;
+            window.telemedSound?.stopRingtone();
             post(window.telemedCallConfig.routes.accept, { video_call_id: activeCall.video_call_id })
                 .then(function (data) { window.location.href = data.call_url; })
                 .catch(function (error) { window.showPatientToast ? window.showPatientToast(error.message, 'error') : alert(error.message); })
@@ -265,6 +374,7 @@
         reject?.addEventListener('click', function () {
             if (!activeCall) return;
             reject.disabled = true;
+            window.telemedSound?.stopRingtone();
             post(window.telemedCallConfig.routes.reject, { video_call_id: activeCall.video_call_id })
                 .then(function () { popup.hidden = true; activeCall = null; })
                 .catch(function (error) { window.showPatientToast ? window.showPatientToast(error.message, 'error') : alert(error.message); })
@@ -275,7 +385,20 @@
             .then(function (echo) {
                 echo.private('users.' + window.telemedCallConfig.userId)
                     .listen('.video-call.signal', function (event) {
-                        if (event.type === 'incoming-call') showIncoming(event);
+                        if (event.type === 'incoming-call') {
+                            showIncoming(event);
+                            return;
+                        }
+
+                        if (
+                            activeCall
+                            && Number(event.video_call_id) === Number(activeCall.video_call_id)
+                            && ['call-ended', 'call-rejected', 'call-accepted'].includes(event.type)
+                        ) {
+                            window.telemedSound?.stopRingtone();
+                            popup.hidden = true;
+                            activeCall = null;
+                        }
                     });
             })
             .catch(function (error) {
