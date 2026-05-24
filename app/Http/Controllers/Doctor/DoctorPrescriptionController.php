@@ -149,7 +149,7 @@ class DoctorPrescriptionController extends Controller
     {
         abort_unless($prescription->doctor_id === $request->user()->id, 403);
 
-        $prescription->load(['patient', 'doctor', 'appointment', 'items.medicine']);
+        $prescription->load(['patient.patientProfile', 'doctor.doctorProfile', 'appointment', 'items.medicine']);
 
         return view('doctor.prescriptions.show', compact('prescription'));
     }
