@@ -33,6 +33,7 @@ return [
             ],
             'client_options' => [
                 'verify' => env('PUSHER_VERIFY_TLS', true),
+                'proxy' => env('PUSHER_PROXY') ?: '',
             ],
         ],
 
