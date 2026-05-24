@@ -15,12 +15,38 @@ class DoctorPrescriptionController extends Controller
 {
     public function index(Request $request): View
     {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+        ]);
+
         $prescriptions = Prescription::with(['patient', 'appointment', 'items.medicine'])
             ->where('doctor_id', $request->user()->id)
-            ->latest()
-            ->paginate(12);
+            ->when(filled($filters['search'] ?? null), function ($query) use ($filters) {
+                $search = trim($filters['search']);
 
-        return view('doctor.prescriptions.index', compact('prescriptions'));
+                $query->where(function ($query) use ($search) {
+                    $query
+                        ->where('diagnosis', 'like', "%{$search}%")
+                        ->orWhere('notes', 'like', "%{$search}%")
+                        ->orWhereHas('patient', function ($query) use ($search) {
+                            $query
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('items.medicine', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->when(filled($filters['date_from'] ?? null), fn ($query) => $query->whereDate('created_at', '>=', $filters['date_from']))
+            ->when(filled($filters['date_to'] ?? null), fn ($query) => $query->whereDate('created_at', '<=', $filters['date_to']))
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
+
+        return view('doctor.prescriptions.index', compact('prescriptions', 'filters'));
     }
 
     public function create(Request $request): View|RedirectResponse
