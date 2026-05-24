@@ -35,7 +35,7 @@
         ['label' => 'Profile Settings', 'route' => 'doctor.profile', 'active' => 'doctor.profile', 'icon' => 'settings'],
     ];
 @endphp
-<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+<body class="doctor-compact min-h-screen bg-slate-50 text-slate-900 antialiased">
     <div class="min-h-screen lg:flex">
         <aside id="doctor-sidebar" class="fixed inset-y-0 left-0 z-40 h-screen w-72 -translate-x-full border-r border-emerald-100 bg-emerald-50/80 shadow-2xl shadow-slate-950/10 transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0 lg:shadow-none">
             <div class="flex h-full flex-col">
