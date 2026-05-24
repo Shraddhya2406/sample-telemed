@@ -37,15 +37,15 @@
 @endphp
 <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
     <div class="min-h-screen lg:flex">
-        <aside id="doctor-sidebar" class="fixed inset-y-0 left-0 z-40 w-72 -translate-x-full border-r border-slate-200 bg-white shadow-2xl shadow-slate-950/10 transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0 lg:shadow-none">
+        <aside id="doctor-sidebar" class="fixed inset-y-0 left-0 z-40 h-screen w-72 -translate-x-full border-r border-emerald-100 bg-emerald-50/80 shadow-2xl shadow-slate-950/10 transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0 lg:shadow-none">
             <div class="flex h-full flex-col">
-                <div class="flex items-center gap-3 border-b border-slate-200 p-4">
+                <div class="flex items-center gap-3 border-b border-emerald-100 p-4">
                     <x-logo size="40" :showText="false" class="block" />
                     <div class="min-w-0">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-blue-600">Doctor Panel</p>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Doctor Panel</p>
                         <p class="truncate text-base font-bold text-slate-950">{{ config('app.name', 'Sample Telemed') }}</p>
                     </div>
-                    <button type="button" class="ml-auto rounded-xl p-2 text-slate-500 hover:bg-slate-100 lg:hidden" data-sidebar-close aria-label="Close menu">
+                    <button type="button" class="ml-auto rounded-xl p-2 text-slate-500 hover:bg-emerald-100 lg:hidden" data-sidebar-close aria-label="Close menu">
                         <i data-lucide="x" class="h-5 w-5"></i>
                     </button>
                 </div>
@@ -56,8 +56,8 @@
                             $isActive = request()->routeIs($item['active']);
                             $href = route($item['route'], $item['params'] ?? []);
                         @endphp
-                        <a href="{{ $href }}" class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ $isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950' }}">
-                            <i data-lucide="{{ $item['icon'] }}" class="h-5 w-5 shrink-0 {{ $isActive ? 'text-white' : 'text-slate-400 group-hover:text-blue-600' }}"></i>
+                        <a href="{{ $href }}" class="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ $isActive ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'text-slate-600 hover:bg-emerald-100/70 hover:text-slate-950' }}">
+                            <i data-lucide="{{ $item['icon'] }}" class="h-5 w-5 shrink-0 {{ $isActive ? 'text-white' : 'text-slate-400 group-hover:text-emerald-600' }}"></i>
                             <span class="truncate">{{ $item['label'] }}</span>
                             @if($item['label'] === 'Notifications' && $notificationUnreadCount > 0)
                                 <span class="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">{{ $notificationUnreadCount }}</span>
@@ -66,7 +66,7 @@
                     @endforeach
                 </nav>
 
-                <div class="m-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-emerald-50 p-4">
+                <div class="m-4 rounded-2xl border border-emerald-100 bg-white/75 p-4 shadow-sm shadow-emerald-900/5">
                     <p class="text-sm font-semibold text-slate-950">{{ $doctor?->name }}</p>
                     <p class="mt-1 text-xs text-slate-500">{{ $profile?->specialization ?: 'Clinical specialist' }}</p>
                     <form method="POST" action="{{ route('logout') }}" class="mt-4">
@@ -83,21 +83,21 @@
         <div id="sidebar-overlay" class="fixed inset-0 z-30 hidden bg-slate-950/40 lg:hidden" data-sidebar-close></div>
 
         <div class="min-w-0 flex-1">
-            <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+            <header class="sticky top-0 z-20 border-b border-emerald-100 bg-emerald-50/90 backdrop-blur">
                 <div class="flex min-h-20 items-center justify-between gap-4 p-3 sm:px-6 lg:px-8">
                     <div class="flex min-w-0 items-center gap-3">
-                        <button type="button" class="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 shadow-sm lg:hidden" data-sidebar-open aria-label="Open menu">
+                        <button type="button" class="rounded-xl border border-emerald-100 bg-white/90 p-2 text-slate-600 shadow-sm lg:hidden" data-sidebar-open aria-label="Open menu">
                             <i data-lucide="menu" class="h-5 w-5"></i>
                         </button>
                         <div class="min-w-0">
-                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">@yield('kicker', 'Clinical Workspace')</p>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700">@yield('kicker', 'Clinical Workspace')</p>
                             <h1 class="truncate text-xl font-bold text-slate-950 sm:text-2xl">@yield('page-title', 'Doctor Panel')</h1>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-3">
                         <div class="relative">
-                            <button type="button" class="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-blue-200 hover:text-blue-600" data-notifications-toggle aria-label="Notifications">
+                            <button type="button" class="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-100 bg-white/90 text-slate-600 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700" data-notifications-toggle aria-label="Notifications">
                                 <i data-lucide="bell" class="h-5 w-5"></i>
                                 @if($notificationUnreadCount > 0)
                                     <span class="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">{{ $notificationUnreadCount }}</span>
@@ -111,7 +111,7 @@
                                 <div class="max-h-96 overflow-y-auto">
                                     @forelse($headerNotifications as $notification)
                                         <a href="{{ route('notifications.open', $notification) }}" class="flex gap-3 border-b border-slate-100 px-4 py-3 transition hover:bg-slate-50">
-                                            <span class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full {{ $notification->read_at ? 'bg-slate-300' : 'bg-blue-600' }}"></span>
+                                            <span class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full {{ $notification->read_at ? 'bg-slate-300' : 'bg-emerald-600' }}"></span>
                                             <span class="min-w-0">
                                                 <span class="block text-sm font-semibold text-slate-950">{{ $notification->title }}</span>
                                                 @if($notification->body)
@@ -127,8 +127,8 @@
                             </div>
                         </div>
 
-                        <a href="{{ route('doctor.profile') }}" class="hidden items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition hover:border-blue-200 sm:flex">
-                            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white">{{ str($doctor?->name ?? 'D')->substr(0, 1)->upper() }}</span>
+                        <a href="{{ route('doctor.profile') }}" class="hidden items-center gap-3 rounded-2xl border border-emerald-100 bg-white/90 px-3 py-2 shadow-sm transition hover:border-emerald-200 sm:flex">
+                            <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-sm font-bold text-white">{{ str($doctor?->name ?? 'D')->substr(0, 1)->upper() }}</span>
                             <span class="min-w-0 text-left">
                                 <span class="block max-w-36 truncate text-sm font-semibold text-slate-950">{{ $doctor?->name }}</span>
                                 <span class="block max-w-36 truncate text-xs text-slate-500">{{ $profile?->specialization ?: 'Doctor' }}</span>
