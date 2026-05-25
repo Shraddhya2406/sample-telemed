@@ -6,7 +6,7 @@
 <!-- Registration Form -->
 <div class="text-center mb-8">
     <h1 class="text-3xl font-bold text-gray-900 mb-2">Create Your Account</h1>
-    <p class="text-gray-600">Join Sample Telemed and start your health journey</p>
+    <p class="text-gray-600">Join NexCura and start your health journey</p>
 </div>
 
 <!-- Validation Errors -->

@@ -7,7 +7,7 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-# Sample Telemed Project
+# NexCura Project
 
 This is a Laravel-based telemedicine application.
 

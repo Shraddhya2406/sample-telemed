@@ -16,7 +16,7 @@
         aria-labelledby="{{ $titleId }}"
         class="block"
     >
-        <title id="{{ $titleId }}">Sample TeleMed logo</title>
+        <title id="{{ $titleId }}">NexCura logo</title>
         <defs>
             <linearGradient id="{{ $gradientId }}" x1="0%" x2="100%" y1="0%" y2="100%">
                 <stop offset="0%" stop-color="#2563EB" />
