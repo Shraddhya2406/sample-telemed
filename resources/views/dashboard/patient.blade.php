@@ -8,6 +8,7 @@
 @php
     $user = Auth::user();
     $latestQuiz = $user->quizAttempts()->latest()->first();
+    $latestHealthConversation = $user->healthConversations()->latest()->first();
     $latestOrder = $user->orders()->latest()->first();
     $upcomingAppointment = $user->patientAppointments()->whereIn('status', ['pending', 'confirmed'])->orderBy('appointment_date')->orderBy('appointment_time')->first();
     $prescriptionCount = $user->patientPrescriptions()->count();
@@ -23,7 +24,7 @@
                 <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Welcome back, {{ $user->name }}</h2>
                 <p class="mt-3 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">Check your appointments, prescriptions, medicine orders, and quick health guidance from one clean workspace.</p>
                 <div class="mt-6 flex flex-col gap-3 sm:flex-row">
-                    <a href="{{ route('patient.health-quiz') }}" class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">Take Health Quiz</a>
+                    <a href="{{ route('patient.health-quiz') }}" class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700">Start AI Health Check</a>
                     <a href="{{ route('patient.appointments.create') }}" class="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300">Book Doctor</a>
                     <a href="{{ route('patient.medicines.index') }}" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">Buy Medicines</a>
                 </div>
@@ -45,9 +46,9 @@
 
     <section class="grid gap-4 md:grid-cols-3">
         <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Recent Diagnosis</p>
-            <p class="mt-2 text-2xl font-bold text-slate-950 dark:text-white">{{ $latestQuiz?->result_category && $latestQuiz->result_category !== 'pending' ? $latestQuiz->result_category : 'Not taken yet' }}</p>
-            <p class="mt-2 text-sm text-slate-500">{{ $latestQuiz?->created_at ? $latestQuiz->created_at->diffForHumans() : 'Start with a quick symptom check.' }}</p>
+            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Recent AI Assessment</p>
+            <p class="mt-2 text-2xl font-bold text-slate-950 dark:text-white">{{ $latestHealthConversation ? str($latestHealthConversation->urgency_level)->headline() : ($latestQuiz?->result_category && $latestQuiz->result_category !== 'pending' ? $latestQuiz->result_category : 'Not taken yet') }}</p>
+            <p class="mt-2 text-sm text-slate-500">{{ $latestHealthConversation?->created_at ? $latestHealthConversation->created_at->diffForHumans() : 'Start with a quick symptom check.' }}</p>
         </div>
         <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Prescriptions</p>
@@ -66,7 +67,7 @@
             <h3 class="text-lg font-bold text-slate-950 dark:text-white">Quick Actions</h3>
             <div class="mt-5 grid gap-3">
                 <a href="{{ route('patient.health-quiz') }}" class="flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50 p-4 transition hover:border-blue-200 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40">
-                    <span><span class="block font-bold text-blue-900 dark:text-blue-100">Take Quiz</span><span class="text-sm text-blue-700 dark:text-blue-300">Answer simple symptom questions.</span></span>
+                    <span><span class="block font-bold text-blue-900 dark:text-blue-100">AI Health Check</span><span class="text-sm text-blue-700 dark:text-blue-300">Chat about symptoms one question at a time.</span></span>
                     <span class="text-blue-700">-></span>
                 </a>
                 <a href="{{ route('patient.appointments.create') }}" class="flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50 p-4 transition hover:border-emerald-200 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40">
@@ -104,7 +105,7 @@
                     <span class="mt-1 h-3 w-3 rounded-full bg-amber-500"></span>
                     <div>
                         <p class="font-semibold text-slate-900 dark:text-white">Health guidance stays simple</p>
-                        <p class="text-sm text-slate-500">Quiz results are suggestions and should be confirmed with a doctor.</p>
+                        <p class="text-sm text-slate-500">AI assessments are preliminary and should be reviewed by a doctor.</p>
                     </div>
                 </div>
             </div>

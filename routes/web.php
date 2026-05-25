@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\MedicineCategoryController as AdminMedicineCatego
 use App\Http\Controllers\Admin\MedicineController as AdminMedicineController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Patient\AIHealthController;
 use App\Http\Controllers\Patient\HealthQuizController;
 use App\Http\Controllers\Patient\MedicineController;
 use App\Http\Controllers\Patient\CartController;
@@ -101,11 +102,14 @@ Route::middleware(['auth', 'role:patient'])->group(function () {
         return view('dashboard.patient');
     })->name('dashboard.patient');
 
-    // AJAX Quiz Routes
-    Route::get('/patient/health-quiz', function () {
-        return view('patient.quiz.ajax');
-    })->name('patient.health-quiz');
+    Route::get('/patient/health-quiz', [AIHealthController::class, 'index'])->name('patient.health-quiz');
+    Route::get('/patient/ai-health-assistant', [AIHealthController::class, 'index'])->name('patient.ai-health.index');
+    Route::post('/patient/ai-health-assistant/start', [AIHealthController::class, 'start'])->name('patient.ai-health.start');
+    Route::post('/patient/ai-health-assistant/new', [AIHealthController::class, 'restart'])->name('patient.ai-health.restart');
+    Route::post('/patient/ai-health-assistant/{conversation}/send', [AIHealthController::class, 'send'])->name('patient.ai-health.send');
+    Route::post('/patient/ai-health-assistant/{conversation}/complete', [AIHealthController::class, 'complete'])->name('patient.ai-health.complete');
 
+    // Legacy AJAX quiz endpoints are kept available for existing data and fallback flows.
     Route::post('/patient/health-quiz/start', [HealthQuizController::class, 'startQuiz']);
 
     Route::get('/patient/health-quiz/question/{order}', [HealthQuizController::class, 'getQuestion']);

@@ -121,6 +121,11 @@ class User extends Authenticatable
         return $this->hasMany(QuizAttempt::class);
     }
 
+    public function healthConversations(): HasMany
+    {
+        return $this->hasMany(HealthConversation::class);
+    }
+
     /**
      * User orders.
      */

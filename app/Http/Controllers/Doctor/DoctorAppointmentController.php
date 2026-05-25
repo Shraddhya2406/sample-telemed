@@ -37,6 +37,7 @@ class DoctorAppointmentController extends Controller
         $appointment->load([
             'patient.quizAttempts.quizAnswers.healthQuestion',
             'patient.quizAttempts.quizAnswers.healthOption',
+            'patient.healthConversations.messages',
             'messages.sender',
             'prescription.items.medicine',
         ]);

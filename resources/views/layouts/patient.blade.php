@@ -30,7 +30,7 @@
         ['label' => 'Medicines', 'route' => 'patient.medicines.index', 'active' => request()->routeIs('patient.medicines.*'), 'icon' => 'M10 21a7 7 0 1 0 0-14 7 7 0 0 0 0 14ZM14.5 5.5l4 4M7 14l7-7'],
         ['label' => 'Orders', 'route' => 'patient.orders.index', 'active' => request()->routeIs('patient.orders.*') || request()->routeIs('patient.checkout'), 'icon' => 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6Zm3 8h6'],
         ['label' => 'Reports', 'route' => 'patient.prescriptions.index', 'active' => request()->routeIs('patient.prescriptions.*'), 'icon' => 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 0v6h6M8 13h8M8 17h5'],
-        ['label' => 'Health Quiz', 'route' => 'patient.health-quiz', 'active' => request()->routeIs('patient.health-quiz*'), 'icon' => 'M12 21s-7-4.4-9-10a5.5 5.5 0 0 1 9-5.9A5.5 5.5 0 0 1 21 11c-2 5.6-9 10-9 10Z'],
+        ['label' => 'AI Health', 'route' => 'patient.health-quiz', 'active' => request()->routeIs('patient.health-quiz*') || request()->routeIs('patient.ai-health.*'), 'icon' => 'M12 21s-7-4.4-9-10a5.5 5.5 0 0 1 9-5.9A5.5 5.5 0 0 1 21 11c-2 5.6-9 10-9 10Z'],
         ['label' => 'Profile', 'route' => 'patient.profile', 'active' => request()->routeIs('patient.profile'), 'icon' => 'M20 21a8 8 0 1 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z'],
     ];
     $cartCount = 0;
@@ -69,7 +69,7 @@
                 </svg>
             </button>
             <p class="pr-7 text-sm font-semibold text-emerald-900 dark:text-emerald-100">Need help choosing care?</p>
-            <p class="mt-1 text-xs leading-5 text-emerald-700 dark:text-emerald-300">Start with the quiz or book a doctor visit for personal guidance.</p>
+            <p class="mt-1 text-xs leading-5 text-emerald-700 dark:text-emerald-300">Start with the AI assistant or book a doctor visit for personal guidance.</p>
             <a href="{{ route('patient.appointments.create') }}" class="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">Book Doctor</a>
         </div>
 

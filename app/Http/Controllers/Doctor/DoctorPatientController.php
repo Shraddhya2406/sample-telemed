@@ -32,6 +32,7 @@ class DoctorPatientController extends Controller
         $patient->load([
             'quizAttempts.quizAnswers.healthQuestion',
             'quizAttempts.quizAnswers.healthOption',
+            'healthConversations.messages',
             'patientAppointments' => fn ($query) => $query->where('doctor_id', $doctorId)->latest('appointment_date'),
             'patientPrescriptions' => fn ($query) => $query->where('doctor_id', $doctorId)->with('items.medicine')->latest(),
         ]);

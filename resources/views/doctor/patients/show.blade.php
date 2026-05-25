@@ -8,6 +8,7 @@
     $latestAppointment = $patient->patientAppointments->first();
     $latestPrescription = $patient->patientPrescriptions->first();
     $latestQuiz = $patient->quizAttempts->sortByDesc('created_at')->first();
+    $latestAIConversation = $patient->healthConversations->sortByDesc('created_at')->first();
 @endphp
 
 <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
@@ -137,10 +138,50 @@
                     <dd class="font-semibold text-slate-900">{{ $patient->patientPrescriptions->count() }}</dd>
                 </div>
                 <div class="flex justify-between gap-3">
-                    <dt class="text-slate-500">Latest Quiz</dt>
-                    <dd class="text-right font-semibold text-slate-900">{{ $latestQuiz?->result_category ?: 'N/A' }}</dd>
+                    <dt class="text-slate-500">Latest AI Urgency</dt>
+                    <dd class="text-right font-semibold text-slate-900">{{ $latestAIConversation ? str($latestAIConversation->urgency_level)->headline() : ($latestQuiz?->result_category ?: 'N/A') }}</dd>
                 </div>
             </dl>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-base font-semibold text-slate-950">AI Assessments</h2>
+                    <p class="text-xs text-slate-500">Preliminary conversations saved for review.</p>
+                </div>
+                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">{{ $patient->healthConversations->count() }}</span>
+            </div>
+
+            <div class="mt-3 max-h-[34rem] space-y-3 overflow-y-auto pr-1">
+                @forelse($patient->healthConversations->sortByDesc('created_at') as $conversation)
+                    <article class="rounded-xl border border-slate-200 p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-950">{{ $conversation->created_at->format('d M Y h:i A') }}</p>
+                                <p class="text-xs text-slate-500">{{ str($conversation->status)->headline() }}</p>
+                            </div>
+                            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{{ str($conversation->urgency_level)->headline() }}</span>
+                        </div>
+                        @if($conversation->summary)
+                            <p class="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">{{ $conversation->summary }}</p>
+                        @endif
+                        <details class="mt-3">
+                            <summary class="cursor-pointer text-xs font-semibold text-blue-700">Conversation transcript</summary>
+                            <div class="mt-2 space-y-2">
+                                @foreach($conversation->messages->sortBy('id') as $message)
+                                    <div class="rounded-lg {{ $message->sender_type === 'patient' ? 'bg-blue-50 text-blue-950' : 'bg-slate-50 text-slate-700' }} px-3 py-2 text-xs leading-5">
+                                        <span class="font-semibold">{{ $message->sender_type === 'patient' ? 'Patient' : 'AI Assistant' }}:</span>
+                                        {{ $message->message }}
+                                    </div>
+                                @endforeach
+                            </div>
+                        </details>
+                    </article>
+                @empty
+                    <x-doctor.empty-state title="No AI assessments" message="AI health assessments will appear when the patient uses the assistant." icon="bot" class="py-6" />
+                @endforelse
+            </div>
         </section>
 
         <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
