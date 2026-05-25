@@ -1,6 +1,8 @@
 @extends('layouts.patient')
 
 @section('title', 'Book Appointment')
+@section('page_title', 'Book Appointment')
+@section('eyebrow', 'Doctor consultation')
 
 @section('content')
 @php
@@ -25,103 +27,159 @@
     ]);
 @endphp
 
-<div class="max-w-6xl mx-auto">
-    <div class="bg-white p-6 rounded shadow mb-6 dark:bg-slate-900 dark:border dark:border-slate-800">
-        <h1 class="text-2xl font-bold text-slate-950 dark:text-white">Book Appointment</h1>
-        <p class="text-gray-600 dark:text-slate-300">Choose a doctor, select a consultation slot, and complete online payment.</p>
-    </div>
+<div class="mx-auto max-w-6xl space-y-4 pb-24 lg:pb-0">
+    <a href="{{ route('patient.appointments.index') }}" class="inline-flex items-center gap-2 text-sm font-bold text-blue-700 transition hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19 8 12l7-7" />
+        </svg>
+        Back to appointments
+    </a>
 
-    <form id="appointment_form" method="POST" action="{{ route('patient.appointments.store') }}" class="bg-white p-6 rounded shadow dark:bg-slate-900 dark:border dark:border-slate-800">
+    <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="grid gap-4 p-4 lg:grid-cols-[1fr_18rem] lg:p-5">
+            <div class="flex min-w-0 gap-3">
+                <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 2v3M17 2v3M4 9h16M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+                    </svg>
+                </span>
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300">New visit</span>
+                        @if($prefillAIConversationId)
+                            <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">AI summary attached</span>
+                        @endif
+                    </div>
+                    <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-950 dark:text-white">Book a doctor appointment</h2>
+                    <p class="mt-1 max-w-2xl text-sm leading-5 text-slate-500 dark:text-slate-400">Choose a doctor, reserve an available time, and complete secure online payment.</p>
+                </div>
+            </div>
+
+            <div class="rounded-lg bg-slate-50 p-4 dark:bg-slate-950">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Consultation fee</p>
+                <div id="appointment_fee_label" class="mt-1 text-2xl font-bold text-slate-950 dark:text-white">Rs. {{ number_format($defaultAppointmentFee, 2) }}</div>
+                <p class="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">Final fee updates after doctor selection.</p>
+            </div>
+        </div>
+    </section>
+
+    <form id="appointment_form" method="POST" action="{{ route('patient.appointments.store') }}" class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
         @csrf
         <input type="hidden" name="appointment_date" id="appointment_date" value="{{ old('appointment_date') }}" required>
         <input type="hidden" name="appointment_time" id="appointment_time" value="{{ old('appointment_time') }}" required>
         <input type="hidden" name="ai_conversation_id" value="{{ $prefillAIConversationId }}">
 
-        <div class="grid grid-cols-1 gap-4">
-            <div>
-                <label class="block font-semibold mb-2 text-slate-950 dark:text-white">Doctor</label>
-                <select name="doctor_id" id="doctor_id" class="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100" required>
-                    <option value="">Select doctor</option>
-                    @foreach($doctors as $doctor)
-                        <option value="{{ $doctor->id }}" @selected(old('doctor_id') == $doctor->id)>
-                            Dr. {{ $doctor->name }} - {{ $doctor->doctorProfile?->specialization ?? 'General Medicine' }}
-                        </option>
-                    @endforeach
-                </select>
+        <section class="rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                <h3 class="font-bold text-slate-950 dark:text-white">Visit details</h3>
+                <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Keep it brief. The doctor can review more details during consultation.</p>
             </div>
 
-            <div>
-                <label class="block font-semibold mb-2 text-slate-950 dark:text-white">Appointment Slot</label>
-                <div class="border rounded p-4 bg-gray-50 flex flex-col md:flex-row md:items-center md:justify-between gap-3 dark:bg-slate-950 dark:border-slate-800">
-                    <div>
-                        <div id="selected_slot_label" class="font-semibold text-gray-900 dark:text-white">No slot selected</div>
-                        <div id="slot_hint" class="text-sm text-gray-600 dark:text-slate-400">Select a doctor first, then choose a date and time.</div>
-                    </div>
-                    <button id="open_slot_modal" type="button" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600" disabled>
-                        Choose Slot
-                    </button>
-                </div>
-                <div id="slot_empty" class="hidden mt-3 border rounded p-4 text-gray-600 bg-gray-50 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400"></div>
-                <div id="slot_error" class="hidden mt-3 border border-red-200 rounded p-3 text-red-700 bg-red-50 text-sm dark:border-red-900 dark:bg-red-950 dark:text-red-200"></div>
-            </div>
-
-            <div>
-                <label class="block font-semibold mb-2 text-slate-950 dark:text-white">Symptoms</label>
-                <textarea name="symptoms" rows="4" class="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100" placeholder="Describe symptoms, duration, and severity">{{ $prefillSymptoms }}</textarea>
-            </div>
-
-            <div>
-                <label class="block font-semibold mb-2 text-slate-950 dark:text-white">Notes</label>
-                <textarea name="notes" rows="3" class="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100" placeholder="Anything else the doctor should know">{{ $prefillNotes }}</textarea>
-            </div>
-
-            <div class="border rounded p-4 bg-green-50 border-green-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3 dark:bg-green-950/40 dark:border-green-900">
+            <div class="space-y-4 p-4 lg:p-5">
                 <div>
-                    <div class="font-semibold text-gray-900 dark:text-green-100">Online Appointment Payment</div>
-                    <div class="text-sm text-gray-600 dark:text-green-300">Your appointment request is created after payment is verified.</div>
+                    <label for="doctor_id" class="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-200">Doctor</label>
+                    <select name="doctor_id" id="doctor_id" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-700 dark:focus:ring-blue-950" required>
+                        <option value="">Select doctor</option>
+                        @foreach($doctors as $doctor)
+                            <option value="{{ $doctor->id }}" @selected(old('doctor_id') == $doctor->id)>
+                                Dr. {{ $doctor->name }} - {{ $doctor->doctorProfile?->specialization ?? 'General Medicine' }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
-                <div id="appointment_fee_label" class="text-xl font-bold text-green-700">Rs. {{ number_format($defaultAppointmentFee, 2) }}</div>
-            </div>
-        </div>
 
-        <div class="mt-6 flex gap-3">
-            <button id="pay_book_button" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed" type="submit">
-                <svg id="payment_spinner" class="w-4 h-4 animate-spin hidden" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-                <span id="payment_button_text">Pay & Book Appointment</span>
-            </button>
-            <a href="{{ route('patient.appointments.index') }}" class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">Cancel</a>
-        </div>
+                <div>
+                    <div class="mb-2 flex items-center justify-between gap-3">
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-200">Appointment slot</label>
+                        <span class="text-xs font-semibold text-slate-400">30 min</span>
+                    </div>
+                    <div class="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="min-w-0">
+                            <div id="selected_slot_label" class="truncate font-bold text-slate-950 dark:text-white">No slot selected</div>
+                            <div id="slot_hint" class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Select a doctor first, then choose a date and time.</div>
+                        </div>
+                        <button id="open_slot_modal" type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 dark:disabled:bg-slate-800 dark:disabled:text-slate-500 sm:w-auto" disabled>
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M5 11h14M7 21h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z" />
+                            </svg>
+                            Choose Slot
+                        </button>
+                    </div>
+                    <div id="slot_empty" class="mt-3 hidden rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400"></div>
+                    <div id="slot_error" class="mt-3 hidden rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200"></div>
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label class="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-200">Symptoms</label>
+                        <textarea name="symptoms" rows="5" class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-700 dark:focus:ring-blue-950" placeholder="Symptoms, duration, severity">{{ $prefillSymptoms }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-200">Notes</label>
+                        <textarea name="notes" rows="5" class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-blue-700 dark:focus:ring-blue-950" placeholder="Anything else the doctor should know">{{ $prefillNotes }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <aside class="space-y-4">
+            <section class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Booking summary</h3>
+                <div class="mt-4 space-y-3">
+                    <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-950">
+                        <p class="text-xs font-semibold text-slate-500">Payment</p>
+                        <p class="mt-1 text-sm font-bold text-slate-950 dark:text-white">Online appointment payment</p>
+                    </div>
+                    <div class="rounded-lg bg-emerald-50 p-3 text-sm leading-5 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
+                        Your appointment request is created after payment is verified.
+                    </div>
+                </div>
+            </section>
+
+            <section class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <button id="pay_book_button" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60" type="submit">
+                    <svg id="payment_spinner" class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                    <span id="payment_button_text">Pay & Book Appointment</span>
+                </button>
+                <a href="{{ route('patient.appointments.index') }}" class="mt-2 inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">Cancel</a>
+            </section>
+        </aside>
     </form>
 </div>
 
 <div id="slot_modal" class="fixed inset-0 z-50 hidden">
-    <div id="slot_modal_backdrop" class="absolute inset-0 bg-black bg-opacity-50"></div>
-    <div class="relative min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white rounded shadow-xl w-full max-w-xl overflow-hidden p-4 dark:bg-slate-900 dark:border dark:border-slate-800">
-            <div class="px-5 py-4 border-b flex items-center justify-between gap-3 dark:border-slate-800">
+    <div id="slot_modal_backdrop" class="absolute inset-0 bg-slate-950/60"></div>
+    <div class="relative flex min-h-screen items-end justify-center p-3 sm:items-center sm:p-4">
+        <div class="max-h-[92svh] w-full max-w-xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5 sm:py-4">
                 <div>
-                    <h2 class="text-lg font-bold text-slate-950 dark:text-white">Choose Appointment Slot</h2>
-                    <p id="slot_modal_subtitle" class="text-sm text-gray-600 dark:text-slate-400">Pick a date and time.</p>
+                    <h2 class="text-lg font-bold text-slate-950 dark:text-white">Choose appointment slot</h2>
+                    <p id="slot_modal_subtitle" class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Pick a date and time.</p>
                 </div>
-                <button id="close_slot_modal" type="button" class="text-gray-500 hover:text-gray-800 text-2xl leading-none dark:text-slate-400 dark:hover:text-white" aria-label="Close slot picker">&times;</button>
+                <button id="close_slot_modal" type="button" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white" aria-label="Close slot picker">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6 6 18" />
+                    </svg>
+                </button>
             </div>
 
-            <div class="p-5 space-y-5">
+            <div class="max-h-[calc(92svh-9.5rem)] space-y-5 overflow-y-auto p-4 sm:p-5">
                 <div>
-                    <div class="font-semibold mb-2 text-slate-950 dark:text-white">Available Dates</div>
+                    <div class="mb-2 text-sm font-bold text-slate-950 dark:text-white">Available dates</div>
                     <div id="slot_dates" class="flex gap-2 overflow-x-auto pb-1"></div>
                 </div>
 
                 <div>
-                    <div id="selected_date_label" class="font-semibold mb-2 text-sm text-gray-700 dark:text-slate-300">Time Slots</div>
-                    <div id="slot_times" class="flex flex-wrap gap-2"></div>
-                    <div id="slot_time_empty" class="hidden border rounded p-4 text-gray-600 bg-gray-50 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-400"></div>
+                    <div id="selected_date_label" class="mb-2 text-sm font-bold text-slate-700 dark:text-slate-300">Time Slots</div>
+                    <div id="slot_times" class="grid grid-cols-2 gap-2 min-[420px]:grid-cols-3"></div>
+                    <div id="slot_time_empty" class="hidden rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400"></div>
                 </div>
             </div>
 
-            <div class="px-5 py-4 border-t bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 dark:bg-slate-950 dark:border-slate-800">
-                <div id="modal_selected_label" class="text-sm text-gray-600 dark:text-slate-400">No slot selected</div>
-                <button id="confirm_slot" type="button" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600" disabled>
+            <div class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
+                <div id="modal_selected_label" class="min-w-0 truncate text-sm font-semibold text-slate-600 dark:text-slate-400">No slot selected</div>
+                <button id="confirm_slot" type="button" class="inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 dark:disabled:bg-slate-800 dark:disabled:text-slate-500 sm:w-auto" disabled>
                     Confirm Slot
                 </button>
             </div>
@@ -455,8 +513,8 @@
                 button.type = 'button';
                 button.dataset.slotButton = 'true';
                 button.className = day.isoDate === dateInput.value && time === timeInput.value
-                    ? 'border rounded-full px-4 py-2 text-sm bg-green-600 text-white border-green-600'
-                    : 'border rounded-full px-4 py-2 text-sm bg-white hover:bg-green-50 hover:border-green-500 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-green-950 dark:hover:border-green-700';
+                    ? 'rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-2.5 text-sm font-bold text-white'
+                    : 'rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-emerald-800 dark:hover:bg-emerald-950';
                 button.textContent = time;
                 button.addEventListener('click', () => {
                     pendingSlot = { date: day.isoDate, time };
@@ -464,10 +522,10 @@
                     confirmButton.disabled = false;
 
                     timeList.querySelectorAll('[data-slot-button]').forEach((slotButton) => {
-                        slotButton.className = 'border rounded-full px-4 py-2 text-sm bg-white hover:bg-green-50 hover:border-green-500 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-green-950 dark:hover:border-green-700';
+                        slotButton.className = 'rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-emerald-800 dark:hover:bg-emerald-950';
                     });
 
-                    button.className = 'border rounded-full px-4 py-2 text-sm bg-green-600 text-white border-green-600';
+                    button.className = 'rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-2.5 text-sm font-bold text-white';
                 });
 
                 timeList.appendChild(button);
@@ -483,8 +541,8 @@
                 button.type = 'button';
                 button.dataset.dateButton = 'true';
                 button.className = day.isoDate === activeDate
-                    ? 'border rounded-full px-4 py-2 text-sm whitespace-nowrap bg-green-600 text-white border-green-600'
-                    : 'border rounded-full px-4 py-2 text-sm whitespace-nowrap bg-white hover:bg-green-50 hover:border-green-500 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-green-950 dark:hover:border-green-700';
+                    ? 'shrink-0 rounded-lg border border-blue-600 bg-blue-600 px-3 py-2 text-sm font-bold text-white'
+                    : 'shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-800 dark:hover:bg-blue-950';
                 button.textContent = chipDate(day.date);
                 button.addEventListener('click', () => {
                     activeDate = day.isoDate;
