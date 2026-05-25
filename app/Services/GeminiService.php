@@ -55,12 +55,13 @@ class GeminiService
             'available_medicines' => $medicines->map(fn ($medicine) => [
                 'id' => $medicine->id,
                 'name' => $medicine->name,
+                'brand' => $medicine->brand,
                 'category' => $medicine->category_name,
                 'description' => $medicine->description,
                 'composition' => $medicine->composition,
                 'stock_quantity' => $medicine->stock_quantity,
             ])->values()->all(),
-            'instruction' => 'Suggest medicines only from available_medicines using medicine_id values.',
+            'instruction' => 'Check every available_medicines item. Match against name, brand, category, description, and composition. Suggest only available_medicines using medicine_id values. If none safely match, return an empty suggestions array.',
         ]);
 
         $allowedIds = $medicines->pluck('id')->map(fn ($id) => (int) $id)->all();
@@ -185,6 +186,8 @@ PROMPT;
         return <<<'PROMPT'
 You suggest medicines from the pharmacy inventory for a telemedicine app after a preliminary AI health assessment.
 This is not a prescription. Do not invent medicine names. Only choose medicines from available_medicines by medicine_id.
+Check every item in available_medicines. Match patient symptoms against each medicine name, brand, category, description, and composition.
+If no medicine safely and directly matches the assessment, return an empty suggestions array.
 Do not suggest antibiotics or prescription-only medicines as self-treatment; if such an item appears relevant, caution that doctor review is required.
 For emergency or high urgency cases, return an empty suggestions array and tell the patient to seek medical care in the caution if needed.
 Avoid dosages and treatment schedules.

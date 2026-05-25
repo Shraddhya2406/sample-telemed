@@ -13,6 +13,11 @@
         'summary' => $conversation->summary,
         'urgency_level' => $conversation->urgency_level,
         'medicine_suggestions' => $conversation->medicine_suggestions ?? [],
+        'medicine_suggestion_message' => $conversation->status === 'completed' && empty($conversation->medicine_suggestions ?? [])
+            ? (in_array($conversation->urgency_level, ['high', 'emergency'], true)
+                ? 'No medicine suggestions are shown because your assessment may need prompt medical review.'
+                : 'No suitable in-stock medicine matched your assessment from the current pharmacy inventory. Please book a doctor consultation or check with a pharmacist for safe guidance.')
+            : null,
         'created_at' => $conversation->created_at?->format('d M Y h:i A'),
         'messages' => $conversation->messages->sortBy('id')->values()->map(fn ($message) => [
             'id' => $message->id,
@@ -217,8 +222,9 @@
 
         function renderMedicineSuggestions() {
             const suggestions = current?.medicine_suggestions || [];
-            medicinePanel.classList.toggle('hidden', !suggestions.length);
-            medicineList.innerHTML = suggestions.map((suggestion) => `
+            const message = current?.medicine_suggestion_message || '';
+            medicinePanel.classList.toggle('hidden', !suggestions.length && !message);
+            medicineList.innerHTML = suggestions.length ? suggestions.map((suggestion) => `
                 <article class="rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950">
                     <div class="flex gap-2">
                         <img src="${escapeHtml(suggestion.image_url || '')}" alt="" class="h-10 w-10 shrink-0 rounded-md border border-slate-100 object-cover dark:border-slate-800">
@@ -242,7 +248,11 @@
                         </div>
                     </div>
                 </article>
-            `).join('');
+            `).join('') : `
+                <div class="rounded-lg border border-slate-200 bg-white p-3 text-sm leading-5 text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+                    ${escapeHtml(message || 'No suitable medicine suggestions were found from current inventory.')}
+                </div>
+            `;
         }
 
         medicineList.addEventListener('click', async (event) => {

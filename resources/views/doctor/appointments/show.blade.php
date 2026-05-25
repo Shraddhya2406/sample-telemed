@@ -140,7 +140,13 @@
                                     <span class="text-blue-700">- {{ $suggestion['reason'] ?? 'Suggested from symptom context.' }}</span>
                                 </div>
                             @empty
-                                <p class="text-sm text-blue-800">No medicine suggestions were generated.</p>
+                                <p class="text-sm text-blue-800">
+                                    @if(in_array($linkedAIConversation->urgency_level, ['high', 'emergency'], true))
+                                        No medicine suggestions are shown because this assessment may need prompt medical review.
+                                    @else
+                                        No suitable in-stock medicine matched the assessment from the current pharmacy inventory.
+                                    @endif
+                                </p>
                             @endforelse
                         </div>
                     </div>

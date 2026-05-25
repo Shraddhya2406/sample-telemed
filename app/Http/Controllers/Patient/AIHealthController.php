@@ -9,6 +9,8 @@ use App\Models\Medicine;
 use App\Services\GeminiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AIHealthController extends Controller
@@ -214,7 +216,7 @@ class AIHealthController extends Controller
         }
 
         $medicines = Medicine::query()
-            ->with('medicineCategory')
+            ->with(['medicineCategory', 'images'])
             ->where('is_active', true)
             ->where('stock_quantity', '>', 0)
             ->where(fn ($query) => $query->whereNull('expiry_date')->orWhereDate('expiry_date', '>=', today()))
@@ -222,11 +224,16 @@ class AIHealthController extends Controller
             ->get();
 
         $suggestions = $this->gemini->generateMedicineSuggestions($conversation, $medicines);
+        $hydratedSuggestions = $this->hydrateMedicineSuggestions($suggestions, $medicines);
 
-        $conversation->update(['medicine_suggestions' => $this->hydrateMedicineSuggestions($suggestions, $medicines)]);
+        if (empty($hydratedSuggestions)) {
+            $hydratedSuggestions = $this->localMedicineSuggestions($conversation, $medicines);
+        }
+
+        $conversation->update(['medicine_suggestions' => $hydratedSuggestions]);
     }
 
-    private function hydrateMedicineSuggestions(array $suggestions, $medicines): array
+    private function hydrateMedicineSuggestions(array $suggestions, Collection $medicines): array
     {
         $medicinesById = $medicines->keyBy('id');
 
@@ -251,6 +258,204 @@ class AIHealthController extends Controller
         })->filter()->values()->all();
     }
 
+    private function localMedicineSuggestions(HealthConversation $conversation, Collection $medicines): array
+    {
+        $context = $this->assessmentContext($conversation);
+        $searchTerms = $this->searchTerms($context);
+
+        if (empty($searchTerms)) {
+            return [];
+        }
+
+        return $medicines
+            ->map(function (Medicine $medicine) use ($searchTerms) {
+                $score = $this->medicineMatchScore($medicine, $searchTerms);
+
+                if ($score < 2 || $this->isPrescriptionLikeMedicine($medicine)) {
+                    return null;
+                }
+
+                return [
+                    'score' => $score,
+                    'medicine' => $medicine,
+                    'matched_terms' => $this->matchedTerms($medicine, $searchTerms),
+                ];
+            })
+            ->filter()
+            ->sortByDesc('score')
+            ->take(4)
+            ->map(fn (array $match) => [
+                'medicine_id' => $match['medicine']->id,
+                'name' => $match['medicine']->name,
+                'category' => $match['medicine']->category_name,
+                'price' => (float) $match['medicine']->price,
+                'stock_quantity' => $match['medicine']->stock_quantity,
+                'image_url' => $match['medicine']->image_url,
+                'url' => route('patient.medicines.show', $match['medicine']),
+                'reason' => $this->localSuggestionReason($match['matched_terms']),
+                'caution' => 'This is a non-prescription suggestion from available stock. Confirm with a doctor or pharmacist before use.',
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function assessmentContext(HealthConversation $conversation): string
+    {
+        $messageText = $conversation->messages()
+            ->oldest('id')
+            ->get()
+            ->map(fn (HealthMessage $message) => $message->message)
+            ->implode(' ');
+
+        return Str::lower(trim(($conversation->summary ?? '').' '.$messageText));
+    }
+
+    private function searchTerms(string $context): array
+    {
+        $terms = collect(preg_split('/[^a-z0-9]+/i', $context) ?: [])
+            ->map(fn ($term) => trim(Str::lower($term)))
+            ->filter(fn ($term) => strlen($term) >= 3 && ! in_array($term, $this->medicineStopWords(), true))
+            ->values();
+
+        $aliases = [
+            'fever' => ['fever', 'temperature', 'paracetamol', 'acetaminophen'],
+            'temperature' => ['fever', 'temperature', 'paracetamol', 'acetaminophen'],
+            'pain' => ['pain', 'ache', 'analgesic', 'paracetamol', 'acetaminophen'],
+            'headache' => ['headache', 'pain', 'paracetamol', 'acetaminophen'],
+            'cough' => ['cough', 'throat', 'cold'],
+            'cold' => ['cold', 'cough', 'nasal', 'congestion'],
+            'allergy' => ['allergy', 'allergic', 'antihistamine', 'cetirizine'],
+            'allergic' => ['allergy', 'allergic', 'antihistamine', 'cetirizine'],
+            'acidity' => ['acidity', 'acid', 'reflux', 'antacid'],
+            'reflux' => ['acidity', 'acid', 'reflux', 'antacid'],
+            'nausea' => ['nausea', 'vomiting', 'oral rehydration', 'ors'],
+            'vomiting' => ['nausea', 'vomiting', 'oral rehydration', 'ors'],
+            'diarrhea' => ['diarrhea', 'loose motion', 'oral rehydration', 'ors'],
+            'dehydration' => ['dehydration', 'oral rehydration', 'ors'],
+            'weakness' => ['weakness', 'vitamin', 'supplement'],
+            'deficiency' => ['deficiency', 'vitamin', 'supplement'],
+        ];
+
+        return $terms
+            ->flatMap(fn ($term) => $aliases[$term] ?? [$term])
+            ->map(fn ($term) => trim(Str::lower($term)))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function medicineMatchScore(Medicine $medicine, array $searchTerms): int
+    {
+        $name = Str::lower((string) $medicine->name);
+        $category = Str::lower((string) $medicine->category_name);
+        $description = Str::lower((string) $medicine->description);
+        $composition = Str::lower((string) $medicine->composition);
+        $brand = Str::lower((string) $medicine->brand);
+        $score = 0;
+
+        foreach ($searchTerms as $term) {
+            if (Str::contains($name, $term)) {
+                $score += 5;
+            }
+
+            if (Str::contains($category, $term) || Str::contains($brand, $term)) {
+                $score += 3;
+            }
+
+            if (Str::contains($description, $term) || Str::contains($composition, $term)) {
+                $score += 2;
+            }
+        }
+
+        return $score;
+    }
+
+    private function matchedTerms(Medicine $medicine, array $searchTerms): array
+    {
+        $medicineText = Str::lower(implode(' ', array_filter([
+            $medicine->name,
+            $medicine->brand,
+            $medicine->category_name,
+            $medicine->description,
+            $medicine->composition,
+        ])));
+
+        return collect($searchTerms)
+            ->filter(fn ($term) => Str::contains($medicineText, $term))
+            ->take(3)
+            ->values()
+            ->all();
+    }
+
+    private function localSuggestionReason(array $matchedTerms): string
+    {
+        if (empty($matchedTerms)) {
+            return 'Matched with the symptoms discussed and current pharmacy inventory.';
+        }
+
+        return 'Matched with '.$this->humanList($matchedTerms).' mentioned in the assessment.';
+    }
+
+    private function humanList(array $items): string
+    {
+        $items = array_values(array_unique($items));
+
+        if (count($items) <= 1) {
+            return $items[0] ?? 'the symptoms';
+        }
+
+        $last = array_pop($items);
+
+        return implode(', ', $items).' and '.$last;
+    }
+
+    private function isPrescriptionLikeMedicine(Medicine $medicine): bool
+    {
+        $text = Str::lower(implode(' ', array_filter([
+            $medicine->name,
+            $medicine->category_name,
+            $medicine->description,
+            $medicine->composition,
+        ])));
+
+        return Str::contains($text, [
+            'antibiotic',
+            'amoxicillin',
+            'azithromycin',
+            'cefixime',
+            'ciprofloxacin',
+            'doxycycline',
+            'metronidazole',
+            'prednisolone',
+            'steroid',
+            'prescription',
+        ]);
+    }
+
+    private function medicineStopWords(): array
+    {
+        return [
+            'about', 'after', 'again', 'also', 'been', 'before', 'brief', 'care', 'doctor', 'does',
+            'during', 'from', 'have', 'having', 'help', 'know', 'like', 'medical', 'medicine',
+            'need', 'only', 'patient', 'please', 'review', 'said', 'should', 'summary', 'that',
+            'their', 'them', 'then', 'there', 'this', 'today', 'what', 'when', 'with', 'your',
+        ];
+    }
+
+    private function medicineSuggestionMessage(HealthConversation $conversation): ?string
+    {
+        if ($conversation->status !== 'completed' || ! empty($conversation->medicine_suggestions ?? [])) {
+            return null;
+        }
+
+        if (in_array($conversation->urgency_level, ['high', 'emergency'], true)) {
+            return 'No medicine suggestions are shown because your assessment may need prompt medical review.';
+        }
+
+        return 'No suitable in-stock medicine matched your assessment from the current pharmacy inventory. Please book a doctor consultation or check with a pharmacist for safe guidance.';
+    }
+
     private function conversationResource(HealthConversation $conversation): array
     {
         return [
@@ -259,6 +464,7 @@ class AIHealthController extends Controller
             'summary' => $conversation->summary,
             'urgency_level' => $conversation->urgency_level,
             'medicine_suggestions' => $conversation->medicine_suggestions ?? [],
+            'medicine_suggestion_message' => $this->medicineSuggestionMessage($conversation),
             'created_at' => $conversation->created_at?->format('d M Y h:i A'),
             'messages' => $conversation->messages->sortBy('id')->values()->map(fn (HealthMessage $message) => [
                 'id' => $message->id,
