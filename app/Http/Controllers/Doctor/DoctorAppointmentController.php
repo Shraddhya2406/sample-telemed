@@ -38,6 +38,7 @@ class DoctorAppointmentController extends Controller
             'patient.quizAttempts.quizAnswers.healthQuestion',
             'patient.quizAttempts.quizAnswers.healthOption',
             'patient.healthConversations.messages',
+            'healthConversation.messages',
             'messages.sender',
             'prescription.items.medicine',
         ]);

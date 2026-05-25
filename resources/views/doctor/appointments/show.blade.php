@@ -7,6 +7,7 @@
 @php
     $notesLocked = in_array($appointment->status, ['rejected', 'completed'], true);
     $aiConversations = $appointment->patient->healthConversations->sortByDesc('created_at')->take(3);
+    $linkedAIConversation = $appointment->healthConversation;
 @endphp
 
 <div class="grid gap-4 lg:grid-cols-3">
@@ -110,6 +111,55 @@
                 @endunless
             </form>
         </div>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-base font-semibold text-slate-950">Linked AI Conversation</h2>
+                    <p class="text-xs text-slate-500">Conversation used when this appointment was booked.</p>
+                </div>
+                @if($linkedAIConversation)
+                    <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $linkedAIConversation->urgency_level === 'emergency' ? 'bg-red-50 text-red-700 ring-1 ring-red-100' : ($linkedAIConversation->urgency_level === 'high' ? 'bg-orange-50 text-orange-700 ring-1 ring-orange-100' : ($linkedAIConversation->urgency_level === 'medium' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-100' : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100')) }}">
+                        {{ str($linkedAIConversation->urgency_level)->headline() }}
+                    </span>
+                @endif
+            </div>
+
+            @if($linkedAIConversation)
+                <div class="mt-3 grid gap-3 md:grid-cols-2">
+                    <div class="rounded-xl bg-slate-50 p-3">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">AI Summary</p>
+                        <p class="mt-2 text-sm leading-6 text-slate-700">{{ $linkedAIConversation->summary ?: 'No summary available.' }}</p>
+                    </div>
+                    <div class="rounded-xl bg-blue-50 p-3">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-blue-700">Medicine Suggestions</p>
+                        <div class="mt-2 space-y-2">
+                            @forelse($linkedAIConversation->medicine_suggestions ?? [] as $suggestion)
+                                <div class="text-sm leading-5 text-blue-950">
+                                    <span class="font-semibold">{{ $suggestion['name'] ?? 'Medicine' }}</span>
+                                    <span class="text-blue-700">- {{ $suggestion['reason'] ?? 'Suggested from symptom context.' }}</span>
+                                </div>
+                            @empty
+                                <p class="text-sm text-blue-800">No medicine suggestions were generated.</p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 max-h-[28rem] space-y-2 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    @foreach($linkedAIConversation->messages->sortBy('id') as $message)
+                        <div class="flex {{ $message->sender_type === 'patient' ? 'justify-end' : 'justify-start' }}">
+                            <div class="max-w-[86%] rounded-lg px-3 py-2 text-sm leading-5 {{ $message->sender_type === 'patient' ? 'bg-blue-600 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200' }}">
+                                <p class="text-[11px] font-semibold {{ $message->sender_type === 'patient' ? 'text-blue-100' : 'text-slate-500' }}">{{ $message->sender_type === 'patient' ? 'Patient' : 'AI Assistant' }} · {{ $message->created_at?->format('d M Y h:i A') }}</p>
+                                <p class="mt-1">{{ $message->message }}</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <x-doctor.empty-state title="No linked AI conversation" message="This appointment was not booked from an AI assessment." icon="bot" class="py-6" />
+            @endif
+        </section>
     </section>
 
     <aside class="space-y-4 lg:col-span-1 lg:sticky lg:top-24 lg:self-start">
@@ -156,48 +206,6 @@
                     Send
                 </button>
             </form>
-        </section>
-
-        <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div class="flex items-center justify-between gap-3">
-                <div>
-                    <h2 class="text-base font-semibold text-slate-950">AI Health Assessment</h2>
-                    <p class="text-xs text-slate-500">Preliminary patient conversation history.</p>
-                </div>
-                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">{{ $appointment->patient->healthConversations->count() }}</span>
-            </div>
-
-            <div class="mt-3 max-h-[28rem] space-y-3 overflow-y-auto pr-1">
-                @forelse($aiConversations as $conversation)
-                    <article class="rounded-xl border border-slate-200 p-3">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <p class="text-sm font-semibold text-slate-950">{{ $conversation->created_at->format('d M Y h:i A') }}</p>
-                                <p class="mt-1 text-xs text-slate-500">{{ str($conversation->status)->headline() }}</p>
-                            </div>
-                            <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $conversation->urgency_level === 'emergency' ? 'bg-red-50 text-red-700 ring-1 ring-red-100' : ($conversation->urgency_level === 'high' ? 'bg-orange-50 text-orange-700 ring-1 ring-orange-100' : ($conversation->urgency_level === 'medium' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-100' : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100')) }}">
-                                {{ str($conversation->urgency_level)->headline() }}
-                            </span>
-                        </div>
-                        @if($conversation->summary)
-                            <p class="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">{{ $conversation->summary }}</p>
-                        @endif
-                        <details class="mt-3">
-                            <summary class="cursor-pointer text-xs font-semibold text-blue-700">View conversation</summary>
-                            <div class="mt-2 space-y-2">
-                                @foreach($conversation->messages->sortBy('id') as $message)
-                                    <div class="rounded-lg {{ $message->sender_type === 'patient' ? 'bg-blue-50 text-blue-950' : 'bg-slate-50 text-slate-700' }} px-3 py-2 text-xs leading-5">
-                                        <span class="font-semibold">{{ $message->sender_type === 'patient' ? 'Patient' : 'AI Assistant' }}:</span>
-                                        {{ $message->message }}
-                                    </div>
-                                @endforeach
-                            </div>
-                        </details>
-                    </article>
-                @empty
-                    <x-doctor.empty-state title="No AI assessments" message="AI health assessments will appear here when the patient completes one." icon="bot" class="py-6" />
-                @endforelse
-            </div>
         </section>
 
         <section class="rounded-2xl border border-slate-200 bg-white p-4 text-xs shadow-sm">

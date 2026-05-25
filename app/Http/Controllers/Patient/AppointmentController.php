@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AppNotification;
 use App\Models\Appointment;
 use App\Models\DoctorAvailability;
+use App\Models\HealthConversation;
 use App\Models\Message;
 use App\Models\User;
 use Carbon\Carbon;
@@ -15,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Razorpay\Api\Api;
 use Razorpay\Api\Errors\Error as RazorpayError;
@@ -53,8 +55,9 @@ class AppointmentController extends Controller
             );
 
         $defaultAppointmentFee = $this->defaultAppointmentFee();
+        $aiPrefill = $this->aiAppointmentPrefill($request);
 
-        return view('patient.appointments.create', compact('doctors', 'bookedSlots', 'defaultAppointmentFee'));
+        return view('patient.appointments.create', compact('doctors', 'bookedSlots', 'defaultAppointmentFee', 'aiPrefill'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -203,6 +206,7 @@ class AppointmentController extends Controller
                 return Appointment::create([
                     'doctor_id' => $doctor->id,
                     'patient_id' => $request->user()->id,
+                    'ai_conversation_id' => $appointmentData['ai_conversation_id'] ?? null,
                     'appointment_date' => $date->toDateString(),
                     'appointment_time' => $time,
                     'status' => 'pending',
@@ -342,9 +346,58 @@ class AppointmentController extends Controller
             'doctor_id' => ['required', 'integer', 'exists:users,id'],
             'appointment_date' => ['required', 'date', 'after_or_equal:today'],
             'appointment_time' => ['required', 'date_format:H:i'],
+            'ai_conversation_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('health_conversations', 'id')->where(fn ($query) => $query->where('user_id', $request->user()->id)),
+            ],
             'symptoms' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
+    }
+
+    private function aiAppointmentPrefill(Request $request): array
+    {
+        $conversationId = $request->integer('ai_conversation');
+
+        if (! $conversationId) {
+            return ['conversation_id' => null, 'symptoms' => null, 'notes' => null];
+        }
+
+        $conversation = HealthConversation::with('messages')
+            ->where('user_id', $request->user()->id)
+            ->find($conversationId);
+
+        if (! $conversation) {
+            return ['conversation_id' => null, 'symptoms' => null, 'notes' => null];
+        }
+
+        $medicineSuggestions = collect($conversation->medicine_suggestions ?? [])
+            ->map(fn ($suggestion) => trim(($suggestion['name'] ?? 'Medicine').': '.($suggestion['reason'] ?? 'Suggested from AI assessment.')))
+            ->filter()
+            ->values();
+
+        $notes = collect([
+            'AI medicine suggestions from available stock:',
+            $medicineSuggestions->isNotEmpty()
+                ? $medicineSuggestions->map(fn ($item) => '- '.$item)->join("\n")
+                : 'No AI medicine suggestions were generated.',
+            '',
+            'Note: AI medicine suggestions are preliminary and need doctor review.',
+        ])->filter(fn ($line) => $line !== null)->join("\n");
+
+        $symptoms = collect([
+            'AI preliminary assessment summary:',
+            $conversation->summary ?: 'No AI summary generated yet.',
+            '',
+            'AI urgency level: '.str($conversation->urgency_level ?: 'low')->headline(),
+        ])->join("\n");
+
+        return [
+            'conversation_id' => $conversation->id,
+            'symptoms' => str($symptoms)->limit(2000, '')->toString(),
+            'notes' => str($notes)->limit(1000, '')->toString(),
+        ];
     }
 
     private function findBookableDoctor(int $doctorId): User

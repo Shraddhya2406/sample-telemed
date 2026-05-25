@@ -166,6 +166,19 @@
                         @if($conversation->summary)
                             <p class="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-600">{{ $conversation->summary }}</p>
                         @endif
+                        @if(! empty($conversation->medicine_suggestions))
+                            <div class="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
+                                <p class="text-xs font-semibold text-blue-900">AI medicine suggestions from available stock</p>
+                                <div class="mt-2 space-y-2">
+                                    @foreach($conversation->medicine_suggestions as $suggestion)
+                                        <div class="text-xs leading-5 text-blue-950">
+                                            <span class="font-semibold">{{ $suggestion['name'] ?? 'Medicine' }}</span>
+                                            <span class="text-blue-700">- {{ $suggestion['reason'] ?? 'Suggested from symptom context.' }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                         <details class="mt-3">
                             <summary class="cursor-pointer text-xs font-semibold text-blue-700">Conversation transcript</summary>
                             <div class="mt-2 space-y-2">

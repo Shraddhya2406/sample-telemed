@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\HealthConversation;
+use Illuminate\Support\Collection;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -36,6 +37,46 @@ class GeminiService
         ])->all());
     }
 
+    public function generateMedicineSuggestions(HealthConversation $conversation, Collection $medicines): array
+    {
+        if ($medicines->isEmpty()) {
+            return [];
+        }
+
+        $messages = $conversation->messages()->oldest('id')->get();
+
+        $result = $this->generate($this->medicineSuggestionPrompt(), [
+            'conversation' => $messages->map(fn ($message) => [
+                'role' => $message->sender_type === 'patient' ? 'Patient' : 'Assistant',
+                'text' => $message->message,
+            ])->all(),
+            'summary' => $conversation->summary,
+            'urgency_level' => $conversation->urgency_level,
+            'available_medicines' => $medicines->map(fn ($medicine) => [
+                'id' => $medicine->id,
+                'name' => $medicine->name,
+                'category' => $medicine->category_name,
+                'description' => $medicine->description,
+                'composition' => $medicine->composition,
+                'stock_quantity' => $medicine->stock_quantity,
+            ])->values()->all(),
+            'instruction' => 'Suggest medicines only from available_medicines using medicine_id values.',
+        ]);
+
+        $allowedIds = $medicines->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        return collect($result['suggestions'] ?? [])
+            ->filter(fn ($suggestion) => in_array((int) ($suggestion['medicine_id'] ?? 0), $allowedIds, true))
+            ->take(4)
+            ->map(fn ($suggestion) => [
+                'medicine_id' => (int) $suggestion['medicine_id'],
+                'reason' => trim((string) ($suggestion['reason'] ?? 'May help with symptoms discussed.')),
+                'caution' => trim((string) ($suggestion['caution'] ?? 'Use only after doctor or pharmacist guidance.')),
+            ])
+            ->values()
+            ->all();
+    }
+
     private function generate(string $systemPrompt, array $history): array
     {
         $key = config('services.gemini.key');
@@ -65,8 +106,8 @@ class GeminiService
                         'role' => 'user',
                         'parts' => [[
                             'text' => json_encode([
-                                'conversation' => $history,
-                                'instruction' => 'Continue the health assessment using the required JSON format.',
+                                'payload' => $history,
+                                'instruction' => 'Follow the system instructions and required JSON format.',
                             ], JSON_PRETTY_PRINT),
                         ]],
                     ]],
@@ -102,6 +143,7 @@ class GeminiService
             'summary' => trim((string) ($decoded['summary'] ?? '')),
             'urgency_level' => $this->normalizeUrgency($decoded['urgency_level'] ?? 'low'),
             'should_end' => (bool) ($decoded['should_end'] ?? false),
+            'suggestions' => is_array($decoded['suggestions'] ?? null) ? $decoded['suggestions'] : [],
         ];
     }
 
@@ -134,6 +176,32 @@ Summarize this preliminary AI health conversation for a doctor. Do not diagnose.
   "urgency_level": "low|medium|high|emergency",
   "should_end": true,
   "summary": "doctor-facing summary"
+}
+PROMPT;
+    }
+
+    private function medicineSuggestionPrompt(): string
+    {
+        return <<<'PROMPT'
+You suggest medicines from the pharmacy inventory for a telemedicine app after a preliminary AI health assessment.
+This is not a prescription. Do not invent medicine names. Only choose medicines from available_medicines by medicine_id.
+Do not suggest antibiotics or prescription-only medicines as self-treatment; if such an item appears relevant, caution that doctor review is required.
+For emergency or high urgency cases, return an empty suggestions array and tell the patient to seek medical care in the caution if needed.
+Avoid dosages and treatment schedules.
+Prefer simple supportive OTC options when appropriate, such as fever relief, allergy relief, cough support, acid reflux support, or vitamins, only if the conversation supports it.
+Respond only as JSON:
+{
+  "reply": "",
+  "urgency_level": "low|medium|high|emergency",
+  "should_end": false,
+  "summary": "",
+  "suggestions": [
+    {
+      "medicine_id": 1,
+      "reason": "short reason tied to symptoms",
+      "caution": "short safety caution, including doctor/pharmacist review"
+    }
+  ]
 }
 PROMPT;
     }

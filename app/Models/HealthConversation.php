@@ -16,6 +16,11 @@ class HealthConversation extends Model
         'status',
         'summary',
         'urgency_level',
+        'medicine_suggestions',
+    ];
+
+    protected $casts = [
+        'medicine_suggestions' => 'array',
     ];
 
     public function user(): BelongsTo

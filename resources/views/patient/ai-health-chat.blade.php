@@ -12,6 +12,7 @@
         'status' => $conversation->status,
         'summary' => $conversation->summary,
         'urgency_level' => $conversation->urgency_level,
+        'medicine_suggestions' => $conversation->medicine_suggestions ?? [],
         'created_at' => $conversation->created_at?->format('d M Y h:i A'),
         'messages' => $conversation->messages->sortBy('id')->values()->map(fn ($message) => [
             'id' => $message->id,
@@ -93,7 +94,15 @@
                 </div>
             </div>
             <div id="summary-panel" class="mt-4 hidden rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm leading-6 text-emerald-900 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-100"></div>
-            <a href="{{ route('patient.appointments.create') }}" class="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700">Book Doctor Review</a>
+            <div id="medicine-panel" class="mt-4 hidden">
+                <div class="mb-2 flex items-center justify-between gap-2">
+                    <h4 class="text-sm font-bold text-slate-950 dark:text-white">Available Medicine Suggestions</h4>
+                    <span class="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300">In stock</span>
+                </div>
+                <div id="medicine-list" class="space-y-1.5"></div>
+                <p class="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">These are not prescriptions. Please confirm with a doctor or pharmacist before use.</p>
+            </div>
+            <a id="book-doctor-review" href="{{ route('patient.appointments.create') }}" class="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700">Book Doctor Review</a>
         </section>
 
         <section class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -118,6 +127,7 @@
             completeTemplate: @json(route('patient.ai-health.complete', ['conversation' => '__ID__'])),
         };
         const conversations = @json($historyPayload);
+        const addToCartUrl = @json(route('patient.cart.add'));
         let current = @json($initialConversation ? $historyPayload->firstWhere('id', $initialConversation->id) : null);
         let busy = false;
 
@@ -129,6 +139,9 @@
         const urgencyEl = document.getElementById('urgency-label');
         const statusEl = document.getElementById('status-label');
         const summaryEl = document.getElementById('summary-panel');
+        const medicinePanel = document.getElementById('medicine-panel');
+        const medicineList = document.getElementById('medicine-list');
+        const bookDoctorReview = document.getElementById('book-doctor-review');
         const historyEl = document.getElementById('history-list');
         const historyCountEl = document.getElementById('history-count');
         const completeButton = document.getElementById('complete-assessment');
@@ -183,10 +196,98 @@
             statusEl.textContent = current?.status ? current.status.charAt(0).toUpperCase() + current.status.slice(1) : 'Active';
             summaryEl.classList.toggle('hidden', !current?.summary);
             summaryEl.textContent = current?.summary || '';
+            renderMedicineSuggestions();
+            updateBookDoctorReviewLink();
             input.disabled = current?.status === 'completed';
             input.placeholder = current?.status === 'completed' ? 'This assessment is completed' : 'Describe your symptoms';
             completeButton.disabled = !current || current.status !== 'active' || busy;
         }
+
+        function updateBookDoctorReviewLink() {
+            const baseUrl = @json(route('patient.appointments.create'));
+            if (!current?.id) {
+                bookDoctorReview.href = baseUrl;
+                return;
+            }
+
+            const url = new URL(baseUrl, window.location.origin);
+            url.searchParams.set('ai_conversation', current.id);
+            bookDoctorReview.href = url.toString();
+        }
+
+        function renderMedicineSuggestions() {
+            const suggestions = current?.medicine_suggestions || [];
+            medicinePanel.classList.toggle('hidden', !suggestions.length);
+            medicineList.innerHTML = suggestions.map((suggestion) => `
+                <article class="rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-950">
+                    <div class="flex gap-2">
+                        <img src="${escapeHtml(suggestion.image_url || '')}" alt="" class="h-10 w-10 shrink-0 rounded-md border border-slate-100 object-cover dark:border-slate-800">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0">
+                                    <p class="truncate text-xs font-bold text-slate-950 dark:text-white">${escapeHtml(suggestion.name)}</p>
+                                    <p class="truncate text-[11px] font-semibold text-slate-500">${escapeHtml(suggestion.category || 'Medicine')}</p>
+                                </div>
+                                <p class="shrink-0 text-[11px] font-bold text-slate-700 dark:text-slate-200">Rs. ${Number(suggestion.price || 0).toFixed(2)}</p>
+                            </div>
+                            <p class="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-600 dark:text-slate-300">${escapeHtml(suggestion.reason)}</p>
+                            <p class="mt-0.5 line-clamp-2 text-[11px] leading-4 text-amber-700 dark:text-amber-300">${escapeHtml(suggestion.caution)}</p>
+                            <div class="mt-1.5 flex items-center justify-between gap-2">
+                                <span class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">${Number(suggestion.stock_quantity || 0)} left</span>
+                                <div class="flex gap-1">
+                                    <a href="${escapeHtml(suggestion.url)}" class="rounded-md border border-slate-200 px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200">View</a>
+                                    <button type="button" data-add-medicine-id="${Number(suggestion.medicine_id || 0)}" class="rounded-md bg-blue-600 px-2 py-1 text-[11px] font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        medicineList.addEventListener('click', async (event) => {
+            const button = event.target.closest('[data-add-medicine-id]');
+            if (!button || button.disabled) return;
+
+            const medicineId = button.dataset.addMedicineId;
+            button.disabled = true;
+            const originalText = button.textContent;
+            button.textContent = 'Adding';
+
+            try {
+                const form = new FormData();
+                form.append('medicine_id', medicineId);
+                form.append('quantity', '1');
+
+                const response = await fetch(addToCartUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: form,
+                });
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Could not add medicine to cart.');
+                }
+
+                window.showPatientToast?.(data.message || 'Medicine added to cart.', 'success');
+                if (typeof data.cart_count !== 'undefined') {
+                    const badge = document.getElementById('cart-count-badge');
+                    if (badge) {
+                        badge.textContent = data.cart_count;
+                        badge.style.display = data.cart_count > 0 ? 'inline-flex' : 'none';
+                    }
+                }
+                button.textContent = 'Added';
+            } catch (error) {
+                window.showPatientToast?.(error.message || 'Could not add medicine to cart.', 'error');
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        });
 
         function renderHistory() {
             historyCountEl.textContent = conversations.length;

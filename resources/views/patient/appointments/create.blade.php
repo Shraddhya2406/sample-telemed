@@ -4,6 +4,9 @@
 
 @section('content')
 @php
+    $prefillSymptoms = old('symptoms', $aiPrefill['symptoms'] ?? null);
+    $prefillNotes = old('notes', $aiPrefill['notes'] ?? null);
+    $prefillAIConversationId = old('ai_conversation_id', $aiPrefill['conversation_id'] ?? null);
     $doctorSlots = $doctors->mapWithKeys(fn ($doctor) => [
         $doctor->id => [
             'availability' => $doctor->doctorAvailabilities
@@ -32,6 +35,7 @@
         @csrf
         <input type="hidden" name="appointment_date" id="appointment_date" value="{{ old('appointment_date') }}" required>
         <input type="hidden" name="appointment_time" id="appointment_time" value="{{ old('appointment_time') }}" required>
+        <input type="hidden" name="ai_conversation_id" value="{{ $prefillAIConversationId }}">
 
         <div class="grid grid-cols-1 gap-4">
             <div>
@@ -63,12 +67,12 @@
 
             <div>
                 <label class="block font-semibold mb-2 text-slate-950 dark:text-white">Symptoms</label>
-                <textarea name="symptoms" rows="4" class="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100" placeholder="Describe symptoms, duration, and severity">{{ old('symptoms') }}</textarea>
+                <textarea name="symptoms" rows="4" class="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100" placeholder="Describe symptoms, duration, and severity">{{ $prefillSymptoms }}</textarea>
             </div>
 
             <div>
                 <label class="block font-semibold mb-2 text-slate-950 dark:text-white">Notes</label>
-                <textarea name="notes" rows="3" class="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100" placeholder="Anything else the doctor should know">{{ old('notes') }}</textarea>
+                <textarea name="notes" rows="3" class="w-full border rounded px-3 py-2 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100" placeholder="Anything else the doctor should know">{{ $prefillNotes }}</textarea>
             </div>
 
             <div class="border rounded p-4 bg-green-50 border-green-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3 dark:bg-green-950/40 dark:border-green-900">
@@ -233,6 +237,7 @@
                 doctor_id: doctorSelect.value,
                 appointment_date: dateInput.value,
                 appointment_time: timeInput.value,
+                ai_conversation_id: form.querySelector('[name="ai_conversation_id"]').value,
                 symptoms: form.querySelector('[name="symptoms"]').value,
                 notes: form.querySelector('[name="notes"]').value,
             };

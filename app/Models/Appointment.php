@@ -12,6 +12,7 @@ class Appointment extends Model
     protected $fillable = [
         'doctor_id',
         'patient_id',
+        'ai_conversation_id',
         'appointment_date',
         'appointment_time',
         'status',
@@ -52,6 +53,11 @@ class Appointment extends Model
     public function prescription()
     {
         return $this->hasOne(Prescription::class);
+    }
+
+    public function healthConversation()
+    {
+        return $this->belongsTo(HealthConversation::class, 'ai_conversation_id');
     }
 
     public function scopeForDoctor($query, int $doctorId)

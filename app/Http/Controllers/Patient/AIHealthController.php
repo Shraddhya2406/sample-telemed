@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Patient;
 use App\Http\Controllers\Controller;
 use App\Models\HealthConversation;
 use App\Models\HealthMessage;
+use App\Models\Medicine;
 use App\Services\GeminiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -94,6 +95,14 @@ class AIHealthController extends Controller
             'summary' => $reply['summary'] ?: $conversation->summary,
         ]);
 
+        if ($reply['should_end']) {
+            try {
+                $this->attachMedicineSuggestions($conversation->fresh('messages'));
+            } catch (\Throwable $exception) {
+                return $this->geminiFailureResponse($exception);
+            }
+        }
+
         return response()->json($this->conversationResource($conversation->fresh('messages')));
     }
 
@@ -122,6 +131,12 @@ class AIHealthController extends Controller
             'summary' => $summary['summary'],
             'urgency_level' => $this->highestUrgency($conversation->urgency_level, $summary['urgency_level']),
         ]);
+
+        try {
+            $this->attachMedicineSuggestions($conversation->fresh('messages'));
+        } catch (\Throwable $exception) {
+            return $this->geminiFailureResponse($exception);
+        }
 
         return response()->json($this->conversationResource($conversation->fresh('messages')));
     }
@@ -191,6 +206,51 @@ class AIHealthController extends Controller
         ], 503);
     }
 
+    private function attachMedicineSuggestions(HealthConversation $conversation): void
+    {
+        if (in_array($conversation->urgency_level, ['high', 'emergency'], true)) {
+            $conversation->update(['medicine_suggestions' => []]);
+            return;
+        }
+
+        $medicines = Medicine::query()
+            ->with('medicineCategory')
+            ->where('is_active', true)
+            ->where('stock_quantity', '>', 0)
+            ->where(fn ($query) => $query->whereNull('expiry_date')->orWhereDate('expiry_date', '>=', today()))
+            ->orderBy('name')
+            ->get();
+
+        $suggestions = $this->gemini->generateMedicineSuggestions($conversation, $medicines);
+
+        $conversation->update(['medicine_suggestions' => $this->hydrateMedicineSuggestions($suggestions, $medicines)]);
+    }
+
+    private function hydrateMedicineSuggestions(array $suggestions, $medicines): array
+    {
+        $medicinesById = $medicines->keyBy('id');
+
+        return collect($suggestions)->map(function (array $suggestion) use ($medicinesById) {
+            $medicine = $medicinesById->get($suggestion['medicine_id']);
+
+            if (! $medicine) {
+                return null;
+            }
+
+            return [
+                'medicine_id' => $medicine->id,
+                'name' => $medicine->name,
+                'category' => $medicine->category_name,
+                'price' => (float) $medicine->price,
+                'stock_quantity' => $medicine->stock_quantity,
+                'image_url' => $medicine->image_url,
+                'url' => route('patient.medicines.show', $medicine),
+                'reason' => $suggestion['reason'],
+                'caution' => $suggestion['caution'],
+            ];
+        })->filter()->values()->all();
+    }
+
     private function conversationResource(HealthConversation $conversation): array
     {
         return [
@@ -198,6 +258,7 @@ class AIHealthController extends Controller
             'status' => $conversation->status,
             'summary' => $conversation->summary,
             'urgency_level' => $conversation->urgency_level,
+            'medicine_suggestions' => $conversation->medicine_suggestions ?? [],
             'created_at' => $conversation->created_at?->format('d M Y h:i A'),
             'messages' => $conversation->messages->sortBy('id')->values()->map(fn (HealthMessage $message) => [
                 'id' => $message->id,
