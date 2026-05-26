@@ -373,8 +373,15 @@
                 form.addEventListener('submit', (ev) => {
                     ev.preventDefault();
                     postForm(form, (data) => {
-                        showAjaxFlash(data.message || 'Item added to cart.', true);
+                        showAjaxFlash(data.message || 'Medicine added to cart.', true);
                         if (data.cart_count !== undefined) updateCartCount(data.cart_count);
+                        if (form.classList.contains('prescription-add-to-cart')) {
+                            const button = form.querySelector('button[type="submit"]');
+                            if (button) {
+                                button.textContent = 'Added';
+                                button.disabled = true;
+                            }
+                        }
                     });
                 });
             });
@@ -463,7 +470,7 @@
                             const wrapper = document.getElementById('cart-wrapper');
                             if (wrapper) wrapper.innerHTML = '<div class="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">Your cart is empty. <a href="' + medicinesUrl + '" class="font-semibold text-blue-600">Browse medicines</a></div>';
                         }
-                        showAjaxFlash(data.message || 'Item removed.', true);
+                        showAjaxFlash(data.message || 'Medicine removed.', true);
                     });
                 });
             });

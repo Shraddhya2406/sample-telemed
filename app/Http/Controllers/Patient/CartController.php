@@ -54,12 +54,12 @@ class CartController extends Controller
         if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Item added to cart.',
+                'message' => 'Medicine added to cart.',
                 'cart_count' => $cartCount,
             ]);
         }
 
-        return back()->with('success', 'Item added to cart.');
+        return back()->with('success', 'Medicine added to cart.');
     }
 
     public function updateQuantity(UpdateCartItemRequest $request)
@@ -108,14 +108,14 @@ class CartController extends Controller
         if ($request->wantsJson() || $request->ajax() || $request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Item removed from cart.',
+                'message' => 'Medicine removed from cart.',
                 'cart_count' => $cartCount,
                 'cart_total' => $cartTotal,
                 'removed_item_id' => $request->cart_item_id,
             ]);
         }
 
-        return back()->with('success', 'Item removed from cart.');
+        return back()->with('success', 'Medicine removed from cart.');
     }
 
     public function clearCart(Request $request)

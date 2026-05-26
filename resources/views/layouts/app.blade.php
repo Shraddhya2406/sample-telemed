@@ -151,7 +151,7 @@
                     body: formData,
                 })
                 .then((res) => handleAjaxResponse(res, (data) => {
-                    const message = data.message || 'Item added to cart.';
+                    const message = data.message || 'Medicine added to cart.';
                     const count = data.cart_count !== undefined ? data.cart_count : null;
                     showAjaxFlash(message, true);
                     if (count !== null) updateCartCount(count);
@@ -233,7 +233,7 @@
                         }
                     }
 
-                    showAjaxFlash(data.message || 'Item removed.', true);
+                    showAjaxFlash(data.message || 'Medicine removed.', true);
                 }))
                 .catch((err) => {
                     showAjaxFlash('Network error', false);

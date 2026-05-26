@@ -202,11 +202,11 @@
                                 @if($showCartActions)
                                     <td class="no-print px-2 py-2 text-center">
                                         @if($item->medicine_id)
-                                            <form method="POST" action="{{ route('patient.cart.add') }}" class="inline-flex">
+                                            <form method="POST" action="{{ route('patient.cart.add') }}" class="ajax-add-to-cart prescription-add-to-cart inline-flex">
                                                 @csrf
                                                 <input type="hidden" name="medicine_id" value="{{ $item->medicine_id }}">
                                                 <input type="hidden" name="quantity" value="1">
-                                                <button class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700" type="submit">Add</button>
+                                                <button class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none" type="submit">Add</button>
                                             </form>
                                         @endif
                                     </td>

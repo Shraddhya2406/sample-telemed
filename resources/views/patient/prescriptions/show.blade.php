@@ -17,7 +17,7 @@
         </button>
     </div>
 
-    @include('prescriptions.document', ['prescription' => $prescription, 'showCartActions' => false])
+    @include('prescriptions.document', ['prescription' => $prescription, 'showCartActions' => true])
 </div>
 @if(request()->boolean('print'))
     <script>
