@@ -6,6 +6,9 @@
 
 @section('content')
 @php
+    $aiAssistantTimezone = 'Asia/Kolkata';
+    $formatAssistantDate = fn ($date) => $date ? $date->copy()->timezone($aiAssistantTimezone)->format('d M Y h:i A').' IST' : null;
+    $formatAssistantTime = fn ($date) => $date ? $date->copy()->timezone($aiAssistantTimezone)->format('h:i A').' IST' : null;
     $initialConversation = $activeConversation ?: $conversations->first();
     $historyPayload = $conversations->map(fn ($conversation) => [
         'id' => $conversation->id,
@@ -18,12 +21,12 @@
                 ? 'No medicine suggestions are shown because your assessment may need prompt medical review.'
                 : 'No suitable in-stock medicine matched your assessment from the current pharmacy inventory. Please book a doctor consultation or check with a pharmacist for safe guidance.')
             : null,
-        'created_at' => $conversation->created_at?->format('d M Y h:i A'),
+        'created_at' => $formatAssistantDate($conversation->created_at),
         'messages' => $conversation->messages->sortBy('id')->values()->map(fn ($message) => [
             'id' => $message->id,
             'sender_type' => $message->sender_type,
             'message' => $message->message,
-            'created_at' => $message->created_at?->format('h:i A'),
+            'created_at' => $formatAssistantTime($message->created_at),
         ])->all(),
     ])->values();
 @endphp

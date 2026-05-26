@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Patient Portal') - {{ config('app.name', 'Sample Telemed') }}</title>
+    <title>@yield('title', 'Patient Portal') - {{ config('app.name', 'NexCura') }}</title>
     <script>
         if (localStorage.getItem('patient-theme') === 'dark') {
             document.documentElement.classList.add('dark');
@@ -46,8 +46,8 @@
         <a href="{{ route('dashboard.patient') }}" class="flex items-center gap-3">
             <x-logo size="40" :showText="false" class="block" />
             <div>
-                <div class="text-lg font-bold tracking-tight text-slate-950 dark:text-white">{{ config('app.name', 'Sample Telemed') }}</div>
-                <div class="text-xs font-medium text-emerald-600 dark:text-emerald-400">Patient Care Portal</div>
+                <div class="text-lg font-bold tracking-tight text-slate-950 dark:text-white">{{ config('app.name', 'NexCura') }}</div>
+                <div class="text-xs font-medium text-emerald-600 dark:text-emerald-400">Intelligent Care. Human Touch.</div>
             </div>
         </a>
 

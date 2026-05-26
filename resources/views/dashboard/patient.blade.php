@@ -10,7 +10,19 @@
     $latestQuiz = $user->quizAttempts()->latest()->first();
     $latestHealthConversation = $user->healthConversations()->latest()->first();
     $latestOrder = $user->orders()->latest()->first();
-    $upcomingAppointment = $user->patientAppointments()->whereIn('status', ['pending', 'confirmed'])->orderBy('appointment_date')->orderBy('appointment_time')->first();
+    $now = now();
+    $upcomingAppointment = $user->patientAppointments()
+        ->whereIn('status', ['pending', 'confirmed'])
+        ->where(function ($query) use ($now) {
+            $query->whereDate('appointment_date', '>', $now->toDateString())
+                ->orWhere(function ($query) use ($now) {
+                    $query->whereDate('appointment_date', $now->toDateString())
+                        ->whereTime('appointment_time', '>=', $now->format('H:i:s'));
+                });
+        })
+        ->orderBy('appointment_date')
+        ->orderBy('appointment_time')
+        ->first();
     $prescriptionCount = $user->patientPrescriptions()->count();
     $orderCount = $user->orders()->count();
     $appointmentCount = $user->patientAppointments()->count();

@@ -15,6 +15,8 @@ use Illuminate\View\View;
 
 class AIHealthController extends Controller
 {
+    private const TIMEZONE = 'Asia/Kolkata';
+
     public function __construct(private readonly GeminiService $gemini)
     {
     }
@@ -465,13 +467,23 @@ class AIHealthController extends Controller
             'urgency_level' => $conversation->urgency_level,
             'medicine_suggestions' => $conversation->medicine_suggestions ?? [],
             'medicine_suggestion_message' => $this->medicineSuggestionMessage($conversation),
-            'created_at' => $conversation->created_at?->format('d M Y h:i A'),
+            'created_at' => $this->formatConversationDate($conversation->created_at),
             'messages' => $conversation->messages->sortBy('id')->values()->map(fn (HealthMessage $message) => [
                 'id' => $message->id,
                 'sender_type' => $message->sender_type,
                 'message' => $message->message,
-                'created_at' => $message->created_at?->format('h:i A'),
+                'created_at' => $this->formatMessageTime($message->created_at),
             ])->all(),
         ];
+    }
+
+    private function formatConversationDate($date): ?string
+    {
+        return $date ? $date->copy()->timezone(self::TIMEZONE)->format('d M Y h:i A').' IST' : null;
+    }
+
+    private function formatMessageTime($date): ?string
+    {
+        return $date ? $date->copy()->timezone(self::TIMEZONE)->format('h:i A').' IST' : null;
     }
 }
