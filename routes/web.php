@@ -26,6 +26,15 @@ use App\Http\Controllers\VideoCallController;
 use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () {
+    if (auth()->check()) {
+        return match (auth()->user()->role?->name) {
+            'admin' => redirect()->route('dashboard.admin'),
+            'doctor' => redirect()->route('dashboard.doctor'),
+            'patient' => redirect()->route('dashboard.patient'),
+            default => view('welcome'),
+        };
+    }
+
     return view('welcome');
 });
 
