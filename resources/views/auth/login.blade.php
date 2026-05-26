@@ -5,7 +5,7 @@
 @section('content')
 <div class="mb-6">
     <p class="text-sm font-medium text-blue-700">Welcome back</p>
-    <h1 class="mt-1 text-2xl font-semibold text-slate-950">Login to NexCura</h1>
+    <h1 class="mt-1 text-2xl font-semibold text-slate-950">Login to {{ config('app.name') }}</h1>
     <p class="mt-2 text-sm leading-6 text-slate-600">Access your dashboard, appointments, and care records.</p>
 </div>
 
@@ -82,7 +82,7 @@
 </form>
 
 <p class="mt-5 text-center text-sm text-slate-600">
-    New to NexCura?
+    New to {{ config('app.name') }}?
     <a href="{{ route('register') }}" class="font-semibold text-blue-700 transition hover:text-blue-800">
         Create an account
     </a>

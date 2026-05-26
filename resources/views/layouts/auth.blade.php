@@ -10,7 +10,7 @@
 <body class="min-h-screen bg-slate-50 text-slate-950 antialiased">
     <header class="border-b border-slate-200 bg-white/90 backdrop-blur">
         <nav class="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <a href="{{ url('/') }}" class="flex items-center gap-2" aria-label="NexCura home">
+            <a href="{{ url('/') }}" class="flex items-center gap-2" aria-label="{{ config('app.name') }} home">
                 <x-logo size="30" :showText="false" />
                 <span class="text-base font-semibold text-slate-950">{{ config('app.name', 'NexCura') }}</span>
             </a>
@@ -24,7 +24,7 @@
     <main class="mx-auto grid min-h-[calc(100vh-3.5rem)] max-w-6xl items-center gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[0.94fr_1.06fr] lg:px-8">
         <section class="hidden overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-200/70 lg:block">
             <div class="border-b border-slate-200 bg-slate-50 px-6 py-5">
-                <p class="text-xs font-medium uppercase text-slate-500">NexCura Access</p>
+                <p class="text-xs font-medium uppercase text-slate-500">{{ config('app.name', 'NexCura') }} Access</p>
                 <h1 class="mt-1 text-xl font-semibold text-slate-950">Care workflows in one secure place.</h1>
             </div>
 

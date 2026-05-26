@@ -6,7 +6,7 @@
 <div class="mb-5">
     <p class="text-sm font-medium text-blue-700">Get started</p>
     <h1 class="mt-1 text-2xl font-semibold text-slate-950">Create your account</h1>
-    <p class="mt-2 text-sm leading-6 text-slate-600">Join NexCura as a patient or doctor and continue to your dashboard.</p>
+    <p class="mt-2 text-sm leading-6 text-slate-600">Join {{ config('app.name', 'NexCura') }} as a patient or doctor and continue to your dashboard.</p>
 </div>
 
 @if ($errors->any())

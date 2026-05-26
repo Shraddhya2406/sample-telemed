@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>NexCura - Intelligent Care. Human Touch.</title>
+    <title>{{ $appName }} - Intelligent Care. Human Touch.</title>
     @vite('resources/css/app.css')
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-950 antialiased">
     <header class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur">
         <nav class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <a href="{{ url('/') }}" class="flex items-center gap-3" aria-label="NexCura home">
+            <a href="{{ url('/') }}" class="flex items-center gap-3" aria-label="{{ $appName }} home">
                 <x-logo size="34" :showText="false" />
                 <span class="text-lg font-semibold tracking-normal text-slate-950">{{ config('app.name', 'NexCura') }}</span>
             </a>
@@ -189,8 +189,8 @@
 
     <footer class="border-t border-slate-200 bg-white">
         <div class="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-            <p>&copy; {{ date('Y') }} NexCura. All rights reserved.</p>
-            <p class="max-w-2xl">NexCura supports care coordination and guidance. Always consult a qualified healthcare professional for diagnosis and treatment.</p>
+            <p>&copy; {{ date('Y') }} {{ $appName }}. All rights reserved.</p>
+            <p class="max-w-2xl">{{ $appName }} supports care coordination and guidance. Always consult a qualified healthcare professional for diagnosis and treatment.</p>
         </div>
     </footer>
 </body>
