@@ -34,9 +34,57 @@
                 font-family: inherit;
             }
 
+            .prescription-document :where(h1, h2, h3, p) {
+                margin: 0;
+            }
+
+            .prescription-document table {
+                margin: 0;
+            }
+
             .prescription-table th,
             .prescription-table td {
                 border: 1px solid #cbd5e1;
+            }
+
+            .prescription-brand-card {
+                width: 350px;
+            }
+
+            .prescription-doctor-block {
+                margin-left: 0;
+                padding-left: 0;
+            }
+
+            .prescription-brand-name {
+                font-size: 1.5rem !important;
+                line-height: 1.75rem !important;
+                font-weight: 800;
+                letter-spacing: -0.025em !important;
+            }
+
+            .prescription-brand-tagline {
+                font-size: 0.75rem;
+                line-height: 1rem;
+                font-weight: 700;
+                letter-spacing: 0.02em;
+                white-space: nowrap;
+            }
+
+            .prescription-title {
+                color: #1d4ed8;
+            }
+
+            .prescription-accent {
+                color: #1d4ed8;
+            }
+
+            .prescription-muted {
+                color: #64748b;
+            }
+
+            .prescription-soft {
+                background: #eff6ff;
             }
 
             @media print {
@@ -66,6 +114,15 @@
                     min-width: 0 !important;
                 }
 
+                .prescription-brand-card {
+                    width: 350px !important;
+                }
+
+                .prescription-brand-name {
+                    font-size: 1.5rem !important;
+                    line-height: 1.75rem !important;
+                }
+
                 .prescription-header,
                 .prescription-patient-line,
                 .prescription-footer {
@@ -79,12 +136,12 @@
 <article class="prescription-document print-area overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-white p-6">
     <div class="prescription-sheet bg-white text-slate-950">
         <header class="prescription-header flex items-start justify-between gap-8 border-b border-slate-200 pb-3">
-            <div class="max-w-xl">
+            <div class="prescription-doctor-block max-w-xl" style="margin-left:0 !important; padding-left:0 !important; transform:translateX(0) !important;">
                 <h1 class="text-base font-bold tracking-tight text-slate-950">{{ $doctor?->name ? 'Dr. '.$doctor->name : 'Doctor' }}</h1>
                 @if($doctorCredentials)
-                    <p class="mt-1 text-sm font-semibold text-blue-700">{{ $doctorCredentials }}</p>
+                    <p class="prescription-accent mt-1 text-sm font-semibold">{{ $doctorCredentials }}</p>
                 @endif
-                <div class="mt-1 space-y-0.5 text-sm leading-5 text-slate-500">
+                <div class="prescription-muted mt-1 space-y-0.5 text-sm leading-5">
                     @if(filled($doctorProfile?->experience_years))
                         <p>{{ $doctorProfile->experience_years }} years experience</p>
                     @endif
@@ -94,33 +151,33 @@
                 </div>
             </div>
 
-            <div class="shrink-0 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-slate-950 shadow-sm">
+            <div class="prescription-brand-card prescription-soft shrink-0 rounded-lg border border-blue-100 px-4 py-3 text-slate-950 shadow-sm">
                 <div class="flex items-center gap-3">
                     <x-logo size="38" :showText="false" class="rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200" />
-                    <div class="text-right">
-                        <p class="text-xl font-bold leading-5 tracking-tight text-slate-950">{{ $appName }}</p>
-                        <p class="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600">Intelligent Care. Human Touch.</p>
+                    <div class="min-w-0 flex-1 text-right">
+                        <p class="prescription-brand-name text-slate-950" style="display:block !important; font-size:1.750rem !important; line-height:2.25rem !important; font-weight:800 !important; letter-spacing:-0.025em !important;">{{ $appName }}</p>
+                        <p class="prescription-brand-tagline mt-1 uppercase text-emerald-600">Intelligent Care. Human Touch.</p>
                     </div>
                 </div>
             </div>
         </header>
 
-        <div class="prescription-patient-line mt-3 flex items-start justify-between gap-5 text-sm text-slate-600">
+        <div class="prescription-patient-line prescription-muted mt-3 flex items-start justify-between gap-5 text-sm">
             <p class="leading-5">
                 <span class="font-bold text-slate-950">{{ $patient?->name ?? 'Patient' }}</span>@if($patientDetails), {{ $patientDetails }}@endif
             </p>
-            <p class="shrink-0 text-right font-semibold text-slate-500">{{ $issuedAt }}</p>
+            <p class="shrink-0 text-right font-semibold">{{ $issuedAt }}</p>
         </div>
 
         <section class="mt-7">
             <div class="mb-2 flex items-end justify-between gap-4">
-                <h2 class="flex-1 text-center text-xl font-bold uppercase tracking-tight text-blue-700">Prescription</h2>
+                <h2 class="prescription-title flex-1 text-center text-xl font-bold uppercase tracking-tight">Prescription</h2>
                 <p class="text-xs font-bold text-slate-500">{{ $reference }}</p>
             </div>
 
             <div class="overflow-x-auto">
                 <table class="prescription-table w-full min-w-[760px] border-collapse text-left text-sm leading-5">
-                    <thead class="bg-blue-50 text-slate-700">
+                    <thead class="prescription-soft text-slate-700">
                         <tr>
                             <th class="w-10 px-2 py-1.5 text-center">#</th>
                             <th class="px-2 py-1.5 text-center">Medicine</th>
@@ -135,7 +192,7 @@
                     <tbody>
                         @forelse($prescription->items as $item)
                             <tr class="align-top">
-                                <td class="px-2 py-2 text-center font-bold text-blue-700">{{ $loop->iteration }}</td>
+                                <td class="prescription-accent px-2 py-2 text-center font-bold">{{ $loop->iteration }}</td>
                                 <td class="px-2 py-2">
                                     <span class="font-bold text-slate-950">{{ $item->medicine?->name ?? 'Medicine' }}</span>
                                 </td>
@@ -167,21 +224,21 @@
 
         @if($appointment?->symptoms)
             <section class="mt-6">
-                <h3 class="text-sm font-bold uppercase tracking-wide text-blue-700">Symptoms:</h3>
+                <h3 class="prescription-accent text-sm font-bold uppercase tracking-wide">Symptoms:</h3>
                 <p class="mt-3 text-sm font-medium leading-6 text-slate-700">{{ $appointment->symptoms }}</p>
             </section>
         @endif
 
         @if($prescription->diagnosis)
             <section class="mt-6">
-                <h3 class="text-sm font-bold uppercase tracking-wide text-blue-700">Diagnosis:</h3>
+                <h3 class="prescription-accent text-sm font-bold uppercase tracking-wide">Diagnosis:</h3>
                 <p class="mt-3 text-sm font-medium leading-6 text-slate-700">{{ $prescription->diagnosis }}</p>
             </section>
         @endif
 
         @if($appointment?->advice || $prescription->notes)
             <section class="mt-6">
-                <h3 class="text-sm font-bold uppercase tracking-wide text-blue-700">Notes:</h3>
+                <h3 class="prescription-accent text-sm font-bold uppercase tracking-wide">Notes:</h3>
                 <div class="mt-3 space-y-2 text-sm leading-6 text-slate-700">
                     @if($appointment?->advice)
                         <p>{{ $appointment->advice }}</p>
