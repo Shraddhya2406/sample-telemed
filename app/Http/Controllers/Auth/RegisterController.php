@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rules\Password;
 
 class RegisterController extends Controller
 {
@@ -27,8 +28,16 @@ class RegisterController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'confirmed',
+                'regex:/^\S*$/',
+                Password::min(8)->mixedCase()->numbers()->symbols(),
+            ],
             'role_id' => 'required|exists:roles,id',
+        ], [
+            'password.regex' => 'The password must not contain spaces.',
         ]);
         $role_id = Role::where('name', $data['role_id'])->value('id');
 

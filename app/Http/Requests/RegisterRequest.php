@@ -1,6 +1,9 @@
+<?php
+
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Password;
 
 class RegisterRequest extends FormRequest
 {
@@ -14,8 +17,21 @@ class RegisterRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8|confirmed',
-            'role_id' => 'required|in:patient,doctor',
+            'password' => [
+                'required',
+                'string',
+                'confirmed',
+                'regex:/^\S*$/',
+                Password::min(8)->mixedCase()->numbers()->symbols(),
+            ],
+            'role_id' => 'required|exists:roles,id',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'password.regex' => 'The password must not contain spaces.',
         ];
     }
 }
