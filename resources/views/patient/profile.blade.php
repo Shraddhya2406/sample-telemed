@@ -7,9 +7,10 @@
 @section('content')
 @php
     $user = Auth::user();
+    $profile = $user->patientProfile;
     $latestQuiz = $user->quizAttempts()->latest()->first();
-    $appointments = $user->patientAppointments()->latest()->take(4)->get();
-    $prescriptions = $user->patientPrescriptions()->latest()->take(4)->get();
+    $appointments = $user->patientAppointments()->latest()->take(1)->get();
+    $prescriptions = $user->patientPrescriptions()->latest()->take(1)->get();
 @endphp
 
 <div class="grid gap-6 pb-20 lg:grid-cols-[.8fr_1.2fr] lg:pb-0">
@@ -31,7 +32,21 @@
                 <label class="text-sm font-bold text-slate-700 dark:text-slate-200">Email address</label>
                 <input value="{{ $user->email }}" readonly class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950">
             </div>
-            <button type="button" disabled class="w-full rounded-lg border border-slate-200 px-5 py-3 text-sm font-bold text-slate-500 dark:border-slate-700">Edit profile coming soon</button>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="text-sm font-bold text-slate-700 dark:text-slate-200">Age</label>
+                    <input value="{{ $profile?->age ?? 'Not recorded' }}" readonly class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950">
+                </div>
+                <div>
+                    <label class="text-sm font-bold text-slate-700 dark:text-slate-200">Gender</label>
+                    <input value="{{ $profile?->gender ? ucfirst($profile->gender) : 'Not recorded' }}" readonly class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950">
+                </div>
+            </div>
+            <div>
+                <label class="text-sm font-bold text-slate-700 dark:text-slate-200">Medical history</label>
+                <textarea readonly rows="4" class="mt-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950">{{ $profile?->medical_history ?: 'Not recorded' }}</textarea>
+            </div>
+            <a href="{{ route('patient.profile.edit') }}" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700">Edit profile</a>
         </div>
     </section>
 
@@ -56,7 +71,7 @@
 
         <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div class="flex items-center justify-between gap-3">
-                <h3 class="text-lg font-bold text-slate-950 dark:text-white">Recent Appointments</h3>
+                <h3 class="text-lg font-bold text-slate-950 dark:text-white">Recent Appointment</h3>
                 <a href="{{ route('patient.appointments.index') }}" class="text-sm font-bold text-blue-700 dark:text-blue-300">View all</a>
             </div>
             <div class="mt-5 space-y-3">
@@ -73,7 +88,7 @@
 
         <section class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div class="flex items-center justify-between gap-3">
-                <h3 class="text-lg font-bold text-slate-950 dark:text-white">Recent Prescriptions</h3>
+                <h3 class="text-lg font-bold text-slate-950 dark:text-white">Recent Prescription</h3>
                 <a href="{{ route('patient.prescriptions.index') }}" class="text-sm font-bold text-blue-700 dark:text-blue-300">View all</a>
             </div>
             <div class="mt-5 space-y-3">

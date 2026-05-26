@@ -31,7 +31,7 @@
         ['label' => 'Orders', 'route' => 'patient.orders.index', 'active' => request()->routeIs('patient.orders.*') || request()->routeIs('patient.checkout'), 'icon' => 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6Zm3 8h6'],
         ['label' => 'Reports', 'route' => 'patient.prescriptions.index', 'active' => request()->routeIs('patient.prescriptions.*'), 'icon' => 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 0v6h6M8 13h8M8 17h5'],
         ['label' => 'AI Health', 'route' => 'patient.health-quiz', 'active' => request()->routeIs('patient.health-quiz*') || request()->routeIs('patient.ai-health.*'), 'icon' => 'M12 21s-7-4.4-9-10a5.5 5.5 0 0 1 9-5.9A5.5 5.5 0 0 1 21 11c-2 5.6-9 10-9 10Z'],
-        ['label' => 'Profile', 'route' => 'patient.profile', 'active' => request()->routeIs('patient.profile'), 'icon' => 'M20 21a8 8 0 1 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z'],
+        ['label' => 'Profile', 'route' => 'patient.profile', 'active' => request()->routeIs('patient.profile*'), 'icon' => 'M20 21a8 8 0 1 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z'],
     ];
     $cartCount = 0;
     try {
@@ -149,6 +149,7 @@
                                 <p class="truncate text-xs text-slate-500">{{ $user?->email }}</p>
                             </div>
                             <a href="{{ route('patient.profile') }}" class="block px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">Profile overview</a>
+                            <a href="{{ route('patient.profile.edit') }}" class="block px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">Edit profile</a>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit" class="block w-full px-4 py-3 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800">Logout</button>

@@ -17,6 +17,7 @@ use App\Http\Controllers\Patient\CartController;
 use App\Http\Controllers\Patient\OrderController;
 use App\Http\Controllers\Patient\PrescriptionController as PatientPrescriptionController;
 use App\Http\Controllers\Patient\AppointmentController as PatientAppointmentController;
+use App\Http\Controllers\Patient\ProfileController as PatientProfileController;
 use App\Http\Controllers\Doctor\DoctorDashboardController;
 use App\Http\Controllers\Doctor\DoctorAppointmentController;
 use App\Http\Controllers\Doctor\DoctorPrescriptionController;
@@ -151,9 +152,9 @@ Route::middleware(['auth', 'role:patient'])->group(function () {
         Route::get('/orders', [OrderController::class, 'myOrders'])->name('orders.index');
         Route::get('/orders/{order}', [OrderController::class, 'orderDetails'])->name('orders.show');
 
-        Route::get('/profile', function () {
-            return view('patient.profile');
-        })->name('profile');
+        Route::get('/profile', [PatientProfileController::class, 'show'])->name('profile');
+        Route::get('/profile/edit', [PatientProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [PatientProfileController::class, 'update'])->name('profile.update');
 
         Route::get('/appointments', [PatientAppointmentController::class, 'index'])->name('appointments.index');
         Route::get('/appointments/create', [PatientAppointmentController::class, 'create'])->name('appointments.create');

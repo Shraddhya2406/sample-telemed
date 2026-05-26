@@ -11,7 +11,7 @@
     $consultationDate = $appointment?->appointment_date?->format('d M Y');
     $consultationTime = $appointment?->appointment_time ? \Illuminate\Support\Str::of($appointment->appointment_time)->substr(0, 5) : null;
     $patientAgeGender = trim(collect([
-        filled($patientProfile?->age) ? $patientProfile->age.' yrs' : null,
+        filled($patientProfile?->age) ? $patientProfile->age.' years' : null,
         $patientProfile?->gender ? ucfirst($patientProfile->gender) : null,
     ])->filter()->join(' / '));
 @endphp
@@ -83,7 +83,7 @@
                 <x-logo size="42" :showText="false" class="shrink-0 rounded-lg bg-white/95 p-1 print:border print:border-slate-200" />
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">{{ $appName }}</h1>
-                    <p class="mt-1 max-w-2xl text-xs leading-5 text-slate-300">Secure teleconsultation, verified clinical records, and coordinated medicine support.</p>
+                    <p class="mt-1 max-w-2xl text-xs leading-5 text-slate-300">Intelligent Care. Human Touch.</p>
                 </div>
             </div>
 
@@ -98,9 +98,7 @@
         <section class="prescription-doctor-panel border-r border-slate-200 px-5 py-3 dark:border-slate-800">
             <h2 class="text-lg font-bold text-slate-950 dark:text-white">{{ $doctor?->name ? 'Dr. '.$doctor->name : '' }}</h2>
             <div class="mt-2 space-y-1 text-sm text-slate-700 dark:text-slate-200">
-                <p class="">{{ $doctorProfile?->specialization }}</p>
-                <p class="">{{ $doctorProfile?->qualification }}</p>
-                <p class="">{{ $doctorProfile?->license_number }}</p>
+                <p class="">{{ $doctorProfile?->specialization }}{{ filled($doctorProfile?->qualification) ? ', '.$doctorProfile?->qualification : ''}}</p>
                 <p class="">{{ filled($doctorProfile?->experience_years) ? $doctorProfile->experience_years.' years' : '' }}</p>
                 <p class=" break-all">{{ $doctor?->email }}</p>
             </div>
